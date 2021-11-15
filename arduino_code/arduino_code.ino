@@ -1,7 +1,7 @@
 #define NUM_OF_VALUES 1
 int i;
 String input, data;
-bool exit_switch, requestNewRecord = false;
+bool requestNewRecord = false;
 
 double valueArr[NUM_OF_VALUES];
 
@@ -10,8 +10,8 @@ void LEDoff();
 void checkInput();
 void updateValues();
 void sendValues();
+
 void setup()
- 
 {
 
 pinMode(13, OUTPUT);
@@ -49,32 +49,34 @@ void sendValues()
 }
 
 void checkInput()
-{
+{ //Needs rework
   if (Serial.available())
   {
+    Serial.println("H");
     input = Serial.readString();
     i = 0;
     Serial.println(input);
-    exit_switch = false;
-    while(!exit_switch && i < input.length())
+    Serial.println("Hi");
+    while(i < input.length())
     {
-      exit_switch = true;
-      switch(input[i])
+      if(input[i] > '0' && input[i] < 'z')
       {
-        case ('1'): //LED on
-          LEDon();
-          break;
-        case ('2'): //LED off
-          LEDoff();
-          break;
-        case('r'):
-          requestNewRecord = true;
-          break;
-        default:
-          exit_switch = false;
+        switch(input[i])
+        {
+          case ('1'): //LED on
+            LEDon();
+            break;
+          case ('2'): //LED off
+            LEDoff();
+            break;
+          case('r'):
+            requestNewRecord = true;
+            break;
+        }
+        i++;
       }
-      i++;
     }
+    Serial.println("Hello");
     
   }
 }
