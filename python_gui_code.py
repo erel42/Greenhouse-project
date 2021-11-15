@@ -1,48 +1,41 @@
 import PySimpleGUI as sg
 import serial
 
-"""
-    Toggle Button Demo
-    The background color of the button toggles between on and off
-    Two versions are present... a simple button that changes text and a graphical one
-    A HUGE thank you to the PySimpleGUI community memeber that donated his time and skill in creating the buttons!
-    The text of the button toggles between Off and On
-
-    Copyright 2021 PySimpleGUI
-"""
-
 
 def main():
-    ser = serial.Serial('COM10', 9600, timeout=0, parity = serial.PARITY_EVEN, rtscts = 1)
+    ser = serial.Serial('COM10', 9600, timeout=0, parity=serial.PARITY_NONE,
+    stopbits=serial.STOPBITS_ONE,
+    bytesize=serial.EIGHTBITS,
+    xonxoff=False,
+    rtscts=False,
+    write_timeout=None,
+    dsrdtr=False,
+    inter_byte_timeout=None,
+    exclusive=None)
 
-    layout = [[sg.Text('A toggle button example')],
-              [sg.Text('A graphical version'),
-               sg.Button('', image_data=toggle_btn_off, key='-TOGGLE-GRAPHIC-',
-                         button_color=(sg.theme_background_color(), sg.theme_background_color()), border_width=0)],
-              [sg.Button('On', size=(3, 1), button_color='white on green', key='-B-'), sg.Button('Exit')]]
+    layout = [
+            [sg.Text('A button to control the LED')],
+            [sg.Button('LED off', size=(9, 4), button_color='white on red', key='-LED-'), sg.Button('Exit')]
+    ]
 
-    window = sg.Window('Toggle Button Example', layout)
+    window = sg.Window('Green house GUI', layout)
 
-    down = graphic_off = True
+    down = False
     while True:  # Event Loop
         if ser.inWaiting:
             print(ser.readline())
         event, values = window.read()
-        print(event, values)
+        #print(event, values)
         if event in (sg.WIN_CLOSED, 'Exit'):
             break
-        elif event == '-B-':  # if the normal button that changes color and text
+        elif event == '-LED-':  # if the normal button that changes color and text
             down = not down
-            window['-B-'].update(text='On' if down else 'Off',
+            window['-LED-'].update(text='LED on' if down else 'LED off',
                                  button_color='white on green' if down else 'white on red')
             if down:
-                ser.write(bytes(b'1'))
+                ser.write(bytes(b'1\n'))
             else:
-                ser.write(bytes(b'2'))
-        elif event == '-TOGGLE-GRAPHIC-':  # if the graphical button that changes images
-            graphic_off = not graphic_off
-            window['-TOGGLE-GRAPHIC-'].update(image_data=toggle_btn_off if graphic_off else toggle_btn_on)
-
+                ser.write(bytes(b'2\n'))
     window.close()
 
 
