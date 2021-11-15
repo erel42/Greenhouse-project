@@ -28,13 +28,11 @@ if (Serial.available())
   {
     switch(input[i])
     {
-      case(1):
-      case ('1'):
+      case ('1'): //LED on
         state = 1;
         exit_switch = true;
         break;
-      case(2):
-      case ('2'):
+      case ('2'): //LED off
         state = 2;
         exit_switch = true;
         break;
