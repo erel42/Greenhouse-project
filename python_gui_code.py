@@ -37,10 +37,8 @@ def main():
                                  button_color='white on green' if down else 'white on red')
             if down:
                 ser.write(bytes(b'1'))
-                print("msg sent")
             else:
                 ser.write(bytes(b'2'))
-                print("msg sent")
         elif event == '-TOGGLE-GRAPHIC-':  # if the graphical button that changes images
             graphic_off = not graphic_off
             window['-TOGGLE-GRAPHIC-'].update(image_data=toggle_btn_off if graphic_off else toggle_btn_on)

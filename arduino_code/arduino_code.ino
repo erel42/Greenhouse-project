@@ -1,6 +1,9 @@
-int state, i;
+int i;
 String input;
 bool exit_switch;
+
+void LEDon();
+void LEDoff();
 
 void setup()
  
@@ -17,47 +20,40 @@ Serial.println("Input 1 to Turn LED on and 2 to off");
 }
 
 void loop() {
-if (Serial.available())
-{
-  input = Serial.readString();
-  state = 0;
-  i = 0;
-  Serial.println(input);
-  exit_switch = false;
-  while(!exit_switch && i < input.length())
+  if (Serial.available())
   {
-    switch(input[i])
+    input = Serial.readString();
+    i = 0;
+    Serial.println(input);
+    exit_switch = false;
+    while(!exit_switch && i < input.length())
     {
-      case ('1'): //LED on
-        state = 1;
-        exit_switch = true;
-        break;
-      case ('2'): //LED off
-        state = 2;
-        exit_switch = true;
-        break;
+      switch(input[i])
+      {
+        case ('1'): //LED on
+          LEDon();
+          exit_switch = true;
+          break;
+        case ('2'): //LED off
+          LEDoff();
+          exit_switch = true;
+          break;
+      }
+      i++;
     }
-    i++;
   }
+}
 
-  if (state == 1)
-
-  {
-
+void LEDon()
+{
   digitalWrite(13, HIGH);
-
+  
   Serial.println("Command completed LED turned ON");
+}
 
-  }
-
-  if (state == 2)
-
-  {
-
+void LEDoff()
+{
   digitalWrite(13, LOW);
 
   Serial.println("Command completed LED turned OFF");
-
-  }
-}
 }
