@@ -52,11 +52,9 @@ void checkInput()
 { //Needs rework
   if (Serial.available())
   {
-    Serial.println("H");
     input = Serial.readString();
     i = 0;
     Serial.println(input);
-    Serial.println("Hi");
     while(i < input.length())
     {
       if(input[i] > '0' && input[i] < 'z')
@@ -73,11 +71,9 @@ void checkInput()
             requestNewRecord = true;
             break;
         }
-        i++;
       }
+      i++;
     }
-    Serial.println("Hello");
-    
   }
 }
 
@@ -85,12 +81,12 @@ void LEDon()
 {
   digitalWrite(13, HIGH);
   
-  Serial.println("Command completed LED turned ON");
+  //Serial.println("Command completed LED turned ON");
 }
 
 void LEDoff()
 {
   digitalWrite(13, LOW);
 
-  Serial.println("Command completed LED turned OFF");
+  //Serial.println("Command completed LED turned OFF");
 }

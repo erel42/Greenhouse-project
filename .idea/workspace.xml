@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="417c0860-ccf0-4a49-b5ec-7c1163eac02b" name="Changes" comment="" />
+    <list default="true" id="417c0860-ccf0-4a49-b5ec-7c1163eac02b" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arduino_code/arduino_code.ino" beforeDir="false" afterPath="$PROJECT_DIR$/arduino_code/arduino_code.ino" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/python_gui_code.py" beforeDir="false" afterPath="$PROJECT_DIR$/python_gui_code.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test code/CSV_test/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/test code/CSV_test/main.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
