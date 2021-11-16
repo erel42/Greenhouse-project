@@ -5,12 +5,13 @@ void setup() {
   Serial.begin(9600);
   
   while (!Serial);
-
+  Serial.println("rHello,from,the,other,side]");
   
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
+  
   if (Serial.available())
   {
     input = Serial.readString();
@@ -23,7 +24,7 @@ void loop() {
         switch(input[i])
         {
           case ('1'): //LED on
-            Serial.println("Hello from the other side");
+            Serial.println("rHello,from,the,other,side");
             break;
         }
       }
