@@ -46,8 +46,11 @@ void turnFaucet2Off();
 
 //Sensor variables
 int temp = -1, humidty = -1, lightLevel = -1;
+int red = 0, green = 0, blue = 0; //RGB values
 
 //Status variables
+bool relay1status = true; //faucet is off
+bool relay2status = true;
 bool requestNewRecord = false;
 
 void setup()
@@ -150,17 +153,21 @@ void LEDoff()
 //Faucet control
 void turnFaucet1On()
 {
-  digitalWrite(RELAY_1_PIN, LOW);
+  relay1status = false;
+  digitalWrite(RELAY_1_PIN, relay1status);
 }
 void turnFaucet1Off()
 {
-  digitalWrite(RELAY_1_PIN, HIGH);
+  relay1status = true;
+  digitalWrite(RELAY_1_PIN, relay1status);
 }
 void turnFaucet2On()
 {
-  digitalWrite(RELAY_2_PIN, LOW);
+  relay2status = false;
+  digitalWrite(RELAY_2_PIN, relay2status);
 }
 void turnFaucet2Off()
 {
-  digitalWrite(RELAY_2_PIN, HIGH);
+  relay2status = true;
+  digitalWrite(RELAY_2_PIN, relay2status);
 }
