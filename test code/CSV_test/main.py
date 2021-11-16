@@ -31,17 +31,11 @@ def main():
 
     input_f = input_f[1:]
     input_f = input_f.replace(']', '')
-    input_f = input_f.replace('\n', '')
+    input_f += '\n'
     print(input_f)
     f = open("demofile2.csv", "a")
     f.write(input_f)
     f.close()
-
-    #with open('records.csv', 'w', newline='') as file:
-        #writer = csv.writer(file)
-        #writer.writerow()#############
-        #writer.writerow([1, "cool", "Frodo Baggins"])
-        #writer.writerow([2, "Harry Potter", "Harry Potter"])
 
     with open('demofile2.csv', 'r') as file:
         reader = csv.reader(file)
