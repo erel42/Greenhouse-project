@@ -9,7 +9,7 @@ dht DHT;
 //Constants
 #define DHT11_PIN 2
 
-#define ldrPin A3
+#define LDR_PIN A3
 
 #define RELAY_1_PIN 4
 #define RELAY_2_PIN 8
@@ -43,7 +43,7 @@ void loop()
     Serial.print(temp);
     Serial.println(" Celsius");
   
-    lightLevel = analogRead(ldrPin);
+    lightLevel = analogRead(LDR_PIN);
     Serial.println(lightLevel);
 
     digitalWrite(RELAY_1_PIN, relay1Status);
