@@ -68,7 +68,7 @@ layout = [[sg.Column(column_heading, justification='center')],
           [sg.Column(column_light, justification='center', vertical_alignment='center')],
           [sg.Column(column_btnControls, justification='center', vertical_alignment='center')],
           [sg.Column(column_recording, justification='center', vertical_alignment='center')],
-          [sg.Column(column_exit, justification='center', vertical_alignment='center')], [sg.Button('Ok', k='-OK-')]]
+          [sg.Column(column_exit, justification='center', vertical_alignment='center')]]
 
 # Create the window
 window = sg.Window('Greenhouse GUI', layout, resizable=True, no_titlebar=True).Finalize()
@@ -76,9 +76,9 @@ window.Maximize()
 
 # Display and interact with the Window using an Event Loop
 while True:
-    event, values = window.read(timeout=500)
+    event, values = window.read(timeout=300)
     # See if user wants to quit or window was closed
-    if event == sg.WINDOW_CLOSED or event == 'Quit':
+    if event == sg.WINDOW_CLOSED:
         break
     elif event == '-WATER-':
         f_water = not f_water
@@ -96,8 +96,12 @@ while True:
         else:
             window['-FERTILIZER-'].update(image_filename='fertilizer-png-off.png', image_size=(150, 150),
                                           image_subsample=3)
-    elif event == '-OK-':
-        sg.Popup('Ok clicked', keep_on_top=True)
+    elif event == '-UPLOAD-':
+        sg.popup_get_file(message='בחר תרחיש', title='Choose scenario')
+    elif event == 'Quit':
+        e_status = sg.popup_yes_no("האם אתם בטוחים שאתם רוצים לצאת? אם תצאו הקלטת הנתונים תיפסק", title='Exit screen')
+        if e_status == 'Yes':
+            break
 
     window['-TIME-'].update(datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
     window['-PH-'].update(ph)
