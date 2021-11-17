@@ -51,7 +51,9 @@ column_btnControls = [
      sg.Button(k='-FERTILIZER-', image_filename='fertilizer-png-off.png', image_size=(150, 150),
                tooltip='לחצו כאן כדי לפתוח או לסגור את ברז הדשן', image_subsample=3)]]
 
-column_recording = [[sg.OptionMenu(values=["פעם בדקה", "פעם ב-5 דקות", "פעם ב-10 דקות"], s=30),
+column_recording = [[sg.Button(image_filename='record-image.png', image_size=(100, 100), k='-RECORD-',
+                               tooltip='לחצו כאן כדי להתחיל הקלטת נתונים', image_subsample=4),
+                     sg.OptionMenu(values=["פעם בדקה", "פעם ב-5 דקות", "פעם ב-10 דקות"], s=30),
                      sg.Text(text=':תדירות הקלטה', font='david 30 normal'),
                      sg.Button(image_filename='upload-image.png', image_size=(100, 100), k='-UPLOAD-',
                                tooltip='לחצו כאן כדי לבחור תכנית פעולה')]]
