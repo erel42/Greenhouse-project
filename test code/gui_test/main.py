@@ -9,8 +9,6 @@ temp = hum = light = gHum = ph = -1.0
 # Faucet control
 f_water = f_fertilizer = False
 
-
-
 column_names = [
     [sg.Text(text='Ph', justification='center', font='david 30 normal', size=(10, 2), text_color='dark grey'),
      sg.Text(text='לחות - אדמה', justification='center', size=(10, 2), font='david 30 normal', text_color='brown'),
@@ -73,7 +71,7 @@ layout = [[sg.Column(column_heading, justification='center')],
           [sg.Column(column_exit, justification='center', vertical_alignment='center')]]
 
 # Create the window
-window = sg.Window('Greenhouse GUI', layout, resizable=True, no_titlebar=True).Finalize()
+window = sg.Window('Greenhouse GUI', layout, resizable=True, no_titlebar=True, keep_on_top=True).Finalize()
 window.Maximize()
 
 # Display and interact with the Window using an Event Loop
@@ -99,9 +97,10 @@ while True:
             window['-FERTILIZER-'].update(image_filename='fertilizer-png-off.png', image_size=(150, 150),
                                           image_subsample=3)
     elif event == '-UPLOAD-':
-        sg.popup_get_file(message='בחר תרחיש', title='Choose scenario')
+        sg.popup_get_file(message='בחר תרחיש', title='Choose scenario', keep_on_top=True)
     elif event == 'Quit':
-        e_status = sg.popup_yes_no("האם אתם בטוחים שאתם רוצים לצאת? אם תצאו הקלטת הנתונים תיפסק", title='Exit screen')
+        e_status = sg.popup_yes_no("האם אתם בטוחים שאתם רוצים לצאת? אם תצאו הקלטת הנתונים תיפסק", title='Exit screen',
+                                   keep_on_top=True)
         if e_status == 'Yes':
             break
 
@@ -109,7 +108,7 @@ while True:
     window['-PH-'].update(ph)
     window['-hum-'].update(str(hum) + '%')
     window['-gHum-'].update(str(gHum) + '%')
-    window['-light-'].update(str(light) + 'ADD UNIT')
+    window['-light-'].update(str(light) + ' LUX')
     window['-temp-'].update(str(temp) + 'C')
 
 # Finish up by removing from the screen
