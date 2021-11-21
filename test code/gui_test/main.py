@@ -10,18 +10,25 @@ temp = hum = light = gHum = ph = -1.0
 f_water = f_fertilizer = False
 
 column_names = [
-    [sg.Text(text='Ph', justification='center', font='david 30 normal', size=(10, 2), text_color='dark grey'),
-     sg.Text(text='לחות - אדמה', justification='center', size=(10, 2), font='david 30 normal', text_color='brown'),
-     sg.Text(text='אור', justification='center', font='david 30 normal', size=(10, 2), text_color='yellow'),
+    [sg.Frame(title='', background_color='green', relief=sg.RELIEF_RAISED, layout=[
+        [sg.Text(text='Ph', justification='center', font='david 30 normal', size=(10, 2), text_color='dark grey')]]),
+     sg.Frame(title='', relief=sg.RELIEF_SOLID, background_color='brown', layout=[
+         [sg.Text(text='לחות - אדמה', justification='center', size=(10, 2), font='david 30 normal',
+                  text_color='brown')]]),
+     sg.Frame(title='', background_color='yellow', relief=sg.RELIEF_RAISED, layout=[
+         [sg.Text(text='אור', justification='center', font='david 30 normal', size=(10, 2), text_color='yellow')]]),
      sg.Text(text='לחות - אויר', justification='center', font='david 30 normal', size=(10, 2)),
      sg.Text(text='טמפרטורה', justification='center', font='david 30 normal', size=(10, 2), text_color='pink')],
     # New row, now we show values
-    [sg.Text(text='loading...', justification='center', k='-PH-', font='david 30 normal', size=(10, 2),
-             text_color='dark grey'),
-     sg.Text(text='loading...', justification='center', k='-gHum-', font='david 30 normal', size=(10, 2),
-             text_color='brown'),
-     sg.Text(text='loading...', justification='center', k='-light-', font='david 30 normal', size=(10, 2),
-             text_color='yellow'),
+    [sg.Frame(title='', relief=sg.RELIEF_SUNKEN, background_color='green', layout=[
+        [sg.Text(text='loading...', justification='center', k='-PH-', font='david 30 normal', size=(10, 2),
+                 text_color='dark grey')]]),
+     sg.Frame(title='', relief=sg.RELIEF_GROOVE, background_color='brown', layout=[
+         [sg.Text(text='loading...', justification='center', k='-gHum-', font='david 30 normal', size=(10, 2),
+                  text_color='brown')]]),
+     sg.Frame(title='', background_color='yellow', relief=sg.RELIEF_RAISED, layout=[
+         [sg.Text(text='loading...', justification='center', k='-light-', font='david 30 normal', size=(10, 2),
+                  text_color='yellow')]]),
      sg.Text(text='loading...', justification='center', k='-hum-', font='david 30 normal', size=(10, 2)),
      sg.Text(text='loading...', justification='center', k='-temp-', font='david 30 normal', size=(10, 2),
              text_color='pink')]]
