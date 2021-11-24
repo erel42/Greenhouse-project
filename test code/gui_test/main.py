@@ -6,11 +6,18 @@ from datetime import datetime
 
 # Great site: https://pysimplegui.readthedocs.io/en/latest/call%20reference/#button-element
 
+# Connections variables
+input_s = input_e = input_f = ""
+add_to_file = False
+writing_entries = False
+read = False
+good = False
+
 # Define the window's contents
-temp = hum = light = gHum = ph = -1.0
 red = green = blue = 0
 prev_value = '#000000'
 down = True
+list_v = [-1.0, -1.0, -1.0, -1.0, -1.0]
 
 # Faucet control
 f_water = f_fertilizer = False
@@ -48,7 +55,7 @@ column_names = [
                 text_color='black'),
      S_gui.Text(text='טמפרטורה', justification='center', font='david 30 normal', size=(10, 2), pad=(14, 10),
                 text_color='black')],
-    # New row, now we show values
+    # New row, now we show the values
     [S_gui.Frame(title='', relief=S_gui.RELIEF_RAISED, background_color='grey', layout=[
         [S_gui.Text(text='loading...', justification='center', k='-PH-', font='david 30 normal', size=(10, 1),
                     text_color='black')]]),
@@ -121,8 +128,8 @@ layout = [[S_gui.Column(
     [S_gui.Column(column_exit, vertical_alignment='center', justification='left')]]
 
 # Create the window
-window = S_gui.Window('Greenhouse GUI', layout, resizable=True, no_titlebar=True, keep_on_top=True).Finalize()
-window.Maximize()
+window = S_gui.Window('Greenhouse GUI', layout, resizable=True, no_titlebar=True, keep_on_top=False).Finalize()
+# window.Maximize()
 
 # Display and interact with the Window using an Event Loop
 while True:
@@ -159,7 +166,6 @@ while True:
     elif event == '-UPDATE-':
         if prev_value != values['-C-']:
             prev_value = values['-C-']
-            print('Hello ' + prev_value)
             tempString = ""
             tempString += prev_value[1]
             tempString += prev_value[2]
@@ -188,14 +194,55 @@ while True:
             break
 
     window['-TIME-'].update(datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
-    window['-PH-'].update(ph)
-    window['-hum-'].update(str(hum) + '%')
-    window['-gHum-'].update(str(gHum) + '%')
-    window['-light-'].update(str(light) + ' LUX')
-    window['-temp-'].update(str(temp) + 'C')
+    window['-PH-'].update(list_v[4])
+    window['-hum-'].update(str(list_v[1]) + '%')
+    window['-gHum-'].update(str(list_v[3]) + '%')
+    window['-light-'].update(str(list_v[2]) + ' LUX')
+    window['-temp-'].update(str(list_v[0]) + 'C')
 
+    input_s = input_e = input_f = ''
     # Handle serial communications
-    if ser.inWaiting:
-        print(ser.readline())
-# Finish up by removing from the screen
+    while ser.inWaiting():
+        input_s = ser.readline()
+        input_e = input_s.decode('utf8', 'strict')
+        input_f += input_e
+        if input_f[0] == 'r':
+            read = True
+        if writing_entries:
+            add_to_file = True
+
+    if read:
+        print(input_f)
+        k = 0
+        while k < len(input_f):
+            if input_f[k] == ']':
+                good = True
+            k = k + 1
+        if good:
+            print('were in')
+            input_f = input_f[1:]
+            input_f = input_f.replace(']', '\n')
+            input_f += '\n'
+            i = j = 0
+            while i < 3:
+                input_e = ''
+                while j < len(input_f) and input_f[j] != ',' and input_f[j] != '\n':
+                    input_e += input_f[j]
+                    j = j + 1
+                j = j + 1
+                list_v[i] = float(input_e)
+                i = i + 1
+            good = False
+        read = False
+
+    if add_to_file:
+        # input_f = input_f[1:]
+        input_f = input_f.replace('\n', '')
+        print(input_f)
+        f = open("demofile2.csv", "a")
+        f.write(input_f)
+        f.close()
+        input_s = input_e = input_f = ""
+        add_to_file = False
+
 window.close()
