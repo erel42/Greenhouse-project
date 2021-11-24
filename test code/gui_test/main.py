@@ -9,7 +9,7 @@ from datetime import datetime
 # Define the window's contents
 temp = hum = light = gHum = ph = -1.0
 red = green = blue = 0
-picker = False
+prev_value = '#000000'
 down = True
 
 # Faucet control
@@ -67,14 +67,14 @@ column_names = [
 
 # The RGB controller row
 column_light = [[S_gui.Button(button_text='החל', font='david 30 normal', k='-UPDATE-'),
-                 S_gui.Input(default_text='0', tooltip='הכניסו ערך בין 0 ל255', justification='center', k='-BLUE-',
-                             size=(10, 1), background_color='light blue', font='david 30 normal'),
-                 S_gui.Input(tooltip='הכניסו ערך בין 0 ל255', justification='center', k='-GREEN-', size=(10, 1),
-                             default_text='0', background_color='light green', font='david 30 normal'),
                  S_gui.Input(tooltip='הכניסו ערך בין 0 ל255', justification='center', k='-RED-', size=(10, 1),
                              default_text='0', background_color='red', font='david 30 normal'),
+                 S_gui.Input(tooltip='הכניסו ערך בין 0 ל255', justification='center', k='-GREEN-', size=(10, 1),
+                             default_text='0', background_color='light green', font='david 30 normal'),
+                 S_gui.Input(default_text='0', tooltip='הכניסו ערך בין 0 ל255', justification='center', k='-BLUE-',
+                             size=(10, 1), background_color='light blue', font='david 30 normal'),
                  S_gui.Text(' או ', font='david 30 normal'),
-                 S_gui.Text('#000000', font='david 30 normal', visible=False, k='-C-'),
+                 S_gui.Input(default_text='#000000', visible=False, k='-C-'),
                  S_gui.ColorChooserButton('בחר צבע', image_filename='color.png', image_subsample=5, k='-COLOR-',
                                           target='-C-')]]
 
@@ -157,15 +157,29 @@ while True:
         S_gui.popup_cancel(title='Need to switch into settings window', keep_on_top=True)
 
     elif event == '-UPDATE-':
-        if picker:
+        if prev_value != values['-C-']:
+            prev_value = values['-C-']
+            print('Hello ' + prev_value)
+            tempString = ""
+            tempString += prev_value[1]
+            tempString += prev_value[2]
+            red = int(tempString, 16)
+            tempString = ""
+            tempString += prev_value[3]
+            tempString += prev_value[4]
+            green = int(tempString, 16)
+            tempString = ""
+            tempString += prev_value[5]
+            tempString += prev_value[6]
+            blue = int(tempString, 16)
             window['-BLUE-'].update(blue)
             window['-RED-'].update(red)
             window['-GREEN-'].update(green)
-            picker = False
         else:
             red = values['-RED-']
             blue = values['-BLUE-']
             green = values['-GREEN-']
+        ser.write(bytes(('c ' + str(red) + ' ' + str(green) + ' ' + str(blue) + '\n').encode('utf8', 'strict')))
 
     elif event == 'Quit':
         e_status = S_gui.popup_yes_no("האם אתם בטוחים שאתם רוצים לצאת? אם תצאו הקלטת הנתונים תיפסק",
