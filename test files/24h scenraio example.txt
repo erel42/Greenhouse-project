@@ -1,0 +1,6 @@
+# Comments work here!
+@ Use '@' to add a print for debugging!
+d 10
+@ Look in the file, comments work using #
+d 10
+@ Use 'd' for adding delay! Delay's are calculated using seconds and are accurate up to about 50ms

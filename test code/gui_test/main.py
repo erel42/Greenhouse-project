@@ -133,7 +133,7 @@ window = S_gui.Window('Greenhouse GUI', layout, resizable=True, no_titlebar=True
 
 # Display and interact with the Window using an Event Loop
 while True:
-    event, values = window.read(timeout=300)
+    event, values = window.read(timeout=50)
     # See if user wants to quit or window was closed
     if event == S_gui.WINDOW_CLOSED:
         break
