@@ -1,18 +1,24 @@
 # Comments work here!
+d 1
+# Comments will be printed in debug mode only
+d 1
 @ Use '@' to add a print for debugging!
-d 10
+d 3
 @ Look in the file, comments work using #
-d 10
+d 3
 @ Use 'd' for adding delay! Delay's are calculated using seconds and are accurate up to about 50ms
-d 10
+d 3
 @ Use 'o' to open a faucet, followed by the faucet number
 o 1
-d 10
+o 2
+d 3
 @ Use 'c' to close a faucet, followed by the faucet number
 c 1
-d10
+c 2
+d 3
 @ Use 's' to set a color
 s 255 255 255
-d 10
+d 3
 @ Use 'r' to add a record
-d 2400
+d 5
+# Wow even more comments
