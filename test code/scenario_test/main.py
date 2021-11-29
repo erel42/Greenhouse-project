@@ -1,7 +1,7 @@
 import PySimpleGUI as sg
 import time
 
-file1 = open('scenario.txt', 'r')
+file1 = open('test.txt', 'r')
 
 Lines = file1.readlines()
 count = 0
@@ -208,7 +208,7 @@ layout = [[sg.Button('Faucet1 is close', k='-F1-')],
           [sg.Button('Faucet2 is close', k='-F2-')],
           [sg.Text('Color: 0 0 0', k='-C-')],
           [sg.Text('Persistent window', k='-TXT-')],
-          [sg.Button('Read', k='-READ-'), sg.Button('Add line', k='-LINE-'), sg.Exit()]]
+          [sg.Button('צור קובץ', k='-CREATE-'), sg.Button('Add line', k='-LINE-'), sg.Exit()]]
 
 # Generating input lines
 for i in range(1, linesOnScreen + 1):
@@ -225,8 +225,15 @@ while True:  # The Event Loop
     current_time = time.time()
     if event == sg.WIN_CLOSED or event == 'Exit':
         break
-    elif event == '-READ-':
-        pause = 0
+    elif event == '-CREATE-':
+        status, pop_values = sg.Window('בחירת שם', [[sg.T('בחרו שם קובץ')],
+                                                    [sg.Input(default_text='Scenario', k='-NAME-'),
+                                                     sg.Button('החל', s=10), sg.Button('בטל', s=10)]],
+                                       disable_close=True).read(close=True)
+        file_write = open(pop_values['-NAME-'] + '.txt', 'w')
+        for i in range(0, len(file)):
+            file_write.write(file[i] + '\n')
+        file_write.close()
     elif 'CONF' in event:
         test = values['-Header' + event[-1] + '-']
         if int(event[-1]) > 1 and file[int(event[-1]) - 2] == '':
