@@ -7,10 +7,13 @@ Lines = file1.readlines()
 count = 0
 lCount = 0
 pause = 0
+offset = 0
+max_offset = 0
 current_time = time.time()
 # red = green = blue = 0
 _red = _green = _blue = 0
 file = []
+shouts = []
 faucets = ['ברז 1', 'ברז 2']
 modes = ['לפי זמן', 'לפי ערך']
 parameters = ['אור', 'לחות באויר', 'לחות באדמה', 'טמפרטורה']
@@ -33,6 +36,23 @@ debug = True  # Set to True to print comments
 
 for i in range(1, linesOnScreen + 1):
     file.append('')
+    shouts.append('')
+
+
+def cycleLines(_values, _window):
+    global offset, max_offset, shouts
+    offset += 1
+    if offset > max_offset:
+        max_offset += 1
+        file.append('')
+        shouts.append('')
+    for i in range(1, linesOnScreen):
+        _window['-Header' + str(i) + '-'].update(values['-Header' + str(i + 1) + '-'])
+        _window['-Line' + str(i) + '-'].update(str(i + offset) + ': ')
+        window['-Text' + str(i) + '-'].update(shouts[i + offset - 1])
+    _window['-Header' + str(linesOnScreen) + '-'].update('')
+    _window['-Line' + str(linesOnScreen) + '-'].update(str(linesOnScreen + offset))
+    _window['-Text' + str(linesOnScreen) + '-'].update('')
 
 
 def printLine(line_count, _line):
@@ -54,15 +74,9 @@ def applyScenario():
             printLine(count, line)
         elif line[0] == 'd':
             line = line[2:]
-            pause = current_time + float(line)
-        elif line[0] == 'c':
-            line = line[2:]
-            line = line[:-1]
-            window['-F' + line + '-'].update('Faucet' + line + ' is close')
+            pause = current_time + int(line)
         elif line[0] == 'o':
-            line = line[2:]
-            line = line[:-1]
-            window['-F' + line + '-'].update('Faucet' + line + ' is open')
+            print('need to implement')
         elif line[0] == 's':
             line = line[2:]
             window['-C-'].update("Color: {}".format(line.strip()))
@@ -72,6 +86,8 @@ def applyScenario():
 
 
 def lightPopup(index):
+    str_to_send = ''
+    str_to_show = ''
     global _red, _green, _blue
     success = False
     while not success:
@@ -98,9 +114,11 @@ def lightPopup(index):
             success = True
         else:
             sg.popup_error('יש להקליד מספרים בין 0 ל255 בלבד!')
-    file[index - 1] = 's ' + str(_red) + ' ' + str(_green) + ' ' + str(_blue)
-    window['-Text' + str(index) + '-'].update(
-        'משנה את הצבע ל: אדום-' + str(_red) + ' ירוק-' + str(_green) + ' כחול-' + str(_blue))
+    str_to_send = 's ' + str(_red) + ' ' + str(_green) + ' ' + str(_blue)
+    str_to_show = 'משנה את הצבע ל: אדום-' + str(_red) + ' ירוק-' + str(_green) + ' כחול-' + str(_blue)
+    file[index - 1] = str_to_send
+    window['-Text' + str(index - offset) + '-'].update(str_to_show)
+    shouts[index - 1] = str_to_show
 
 
 def faucetPopup(index):
@@ -171,7 +189,8 @@ def faucetPopup(index):
                 sg.popup_error('אנא הכניסו ערכים תקינים')
 
     file[index - 1] = str_to_send
-    window['-Text' + str(index) + '-'].update(str_to_show)
+    window['-Text' + str(index - offset) + '-'].update(str_to_show)
+    shouts[index - 1] = str_to_show
 
 
 def delayPopup(index):
@@ -199,16 +218,15 @@ def delayPopup(index):
             sg.popup_error('אנא הכניסו ערכים תקינים')
 
     file[index - 1] = str_to_send
-    window['-Text' + str(index) + '-'].update(str_to_show)
+    window['-Text' + str(index - offset) + '-'].update(str_to_show)
+    shouts[index - 1] = str_to_show
 
 
 sg.theme('DarkAmber')  # Keep things interesting for your users
 
-layout = [[sg.Button('Faucet1 is close', k='-F1-')],
-          [sg.Button('Faucet2 is close', k='-F2-')],
-          [sg.Text('Color: 0 0 0', k='-C-')],
+layout = [[sg.Text('Color: 0 0 0', k='-C-')],
           [sg.Text('Persistent window', k='-TXT-')],
-          [sg.Button('צור קובץ', k='-CREATE-'), sg.Button('Add line', k='-LINE-'), sg.Exit()]]
+          [sg.Button('צור קובץ', k='-CREATE-'), sg.Button('Cycle lines', k='-LINE-'), sg.Exit()]]
 
 # Generating input lines
 for i in range(1, linesOnScreen + 1):
@@ -232,19 +250,23 @@ while True:  # The Event Loop
                                        disable_close=True).read(close=True)
         file_write = open(pop_values['-NAME-'] + '.txt', 'w')
         for i in range(0, len(file)):
-            file_write.write(file[i] + '\n')
+            if file[i] != '':
+                file_write.write('@ ' + shouts[i] + '\n')
+                file_write.write(file[i] + '\n')
         file_write.close()
     elif 'CONF' in event:
         test = values['-Header' + event[-1] + '-']
-        if int(event[-1]) > 1 and file[int(event[-1]) - 2] == '':
+        if (int(event[-1]) + offset) > 1 and file[int(event[-1]) + offset - 2] == '':
             sg.popup_error('נא להגדיר פעולות על פי סדר!')
         elif test == 'ברזים':
-            faucetPopup(int(event[-1]))
+            faucetPopup(int(event[-1]) + offset)
         elif test == 'תאורה':
-            lightPopup(int(event[-1]))
+            lightPopup(int(event[-1]) + offset)
         elif test == 'השהייה':
-            delayPopup(int(event[-1]))
+            delayPopup(int(event[-1]) + offset)
         else:
             sg.popup_error('נא להכניס ערך תקין')
+    elif event == '-LINE-':
+        cycleLines(values, window)
 
     applyScenario()
