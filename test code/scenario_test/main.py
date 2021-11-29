@@ -31,12 +31,34 @@ _type_dic = {
     '-קטן מ': '<'
 }
 
-linesOnScreen = 10
+linesOnScreen = 15
 debug = True  # Set to True to print comments
 
 for i in range(1, linesOnScreen + 1):
     file.append('')
     shouts.append('')
+
+
+def cycleBackLines(_values, _window):
+    global offset, max_offset, shouts, file
+    offset -= 1
+    for i in range(2, linesOnScreen + 1):
+        _window['-Header' + str(i) + '-'].update(values['-Header' + str(i - 1) + '-'])
+        _window['-Line' + str(i) + '-'].update(str(i + offset) + ': ')
+        window['-Text' + str(i) + '-'].update(shouts[i + offset - 1])
+    try:
+        if file[offset][0] == 'o':
+            _window['-Header1-'].update('ברזים')
+        elif file[offset][0] == 's':
+            _window['-Header1-'].update('תאורה')
+        elif file[offset][0] == 'd':
+            _window['-Header1-'].update('השהייה')
+        else:
+            _window['-Header1-'].update('')
+    except:
+        _window['-Header1-'].update('')
+    _window['-Line1-'].update(str(offset + 1) + ': ')
+    _window['-Text1-'].update(shouts[offset])
 
 
 def cycleLines(_values, _window):
@@ -51,7 +73,7 @@ def cycleLines(_values, _window):
         _window['-Line' + str(i) + '-'].update(str(i + offset) + ': ')
         window['-Text' + str(i) + '-'].update(shouts[i + offset - 1])
     _window['-Header' + str(linesOnScreen) + '-'].update('')
-    _window['-Line' + str(linesOnScreen) + '-'].update(str(linesOnScreen + offset))
+    _window['-Line' + str(linesOnScreen) + '-'].update(str(linesOnScreen + offset) + ': ')
     _window['-Text' + str(linesOnScreen) + '-'].update('')
 
 
@@ -224,9 +246,10 @@ def delayPopup(index):
 
 sg.theme('DarkAmber')  # Keep things interesting for your users
 
-layout = [[sg.Text('Color: 0 0 0', k='-C-')],
-          [sg.Text('Persistent window', k='-TXT-')],
-          [sg.Button('צור קובץ', k='-CREATE-'), sg.Button('Cycle lines', k='-LINE-'), sg.Exit()]]
+layout = [[sg.Text('Color: 0 0 0', k='-C-', visible=False)],
+          [sg.Text('Persistent window', k='-TXT-', visible=False)],
+          [sg.Button('צור קובץ', k='-CREATE-'), sg.Button('גלגל מעלה', k='-LINE-'),
+           sg.Button('גלגל מטה', k='-LINEBACK-'), sg.Exit()]]
 
 # Generating input lines
 for i in range(1, linesOnScreen + 1):
@@ -236,7 +259,7 @@ for i in range(1, linesOnScreen + 1):
                    sg.Text('', k='-Text' + str(i) + '-')])
 
 window = sg.Window('Window that stays open', layout, font='david 18 normal').finalize()
-# window.maximize()
+window.maximize()
 
 while True:  # The Event Loop
     event, values = window.read(timeout=50)
@@ -268,5 +291,8 @@ while True:  # The Event Loop
             sg.popup_error('נא להכניס ערך תקין')
     elif event == '-LINE-':
         cycleLines(values, window)
+    elif event == '-LINEBACK-':
+        if offset > 0:
+            cycleBackLines(values, window)
 
     applyScenario()
