@@ -128,8 +128,8 @@ layout = [[S_gui.Column(
     [S_gui.Column(column_exit, vertical_alignment='center', justification='left')]]
 
 # Create the window
-window = S_gui.Window('Greenhouse GUI', layout, resizable=True, no_titlebar=True, keep_on_top=False).Finalize()
-# window.Maximize()
+window = S_gui.Window('Greenhouse GUI', layout, resizable=True, no_titlebar=True, keep_on_top=True).Finalize()
+window.Maximize()
 
 # Display and interact with the Window using an Event Loop
 while True:
@@ -219,7 +219,6 @@ while True:
                 good = True
             k = k + 1
         if good:
-            print('were in')
             input_f = input_f[1:]
             input_f = input_f.replace(']', '\n')
             input_f += '\n'

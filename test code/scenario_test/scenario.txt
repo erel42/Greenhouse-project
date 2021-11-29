@@ -1,3 +1,6 @@
+{
+# Need to add here a setup process, runs once
+}
 # Comments work here!
 d 1
 # Comments will be printed in debug mode only
