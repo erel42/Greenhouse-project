@@ -29,6 +29,18 @@ arduino_ports = [
     if 'Arduino' in p.description  # may need tweaking to match new arduinos
 ]
 if not arduino_ports:
+    while not arduino_ports:
+        e, v = S_gui.Window('שגיאה! לא נמצא ארדואינו מחובר', [[S_gui.T('ארדואינו לא מחובר או לא נמצא! נא לבדוק חיבור')],
+                                                              [S_gui.Button('בדוק שוב'),
+                                                               S_gui.Button('צא', k='--exit--')]],
+                            disable_close=True).read(close=True)
+        if e == '--exit--':
+            exit()
+        arduino_ports = [
+            p.device
+            for p in serial.tools.list_ports.comports()
+            if 'Arduino' in p.description  # may need tweaking to match new arduinos
+        ]
     raise IOError("No Arduino found")
 if len(arduino_ports) > 1:
     warnings.warn('Multiple Arduinos found - using the first')
@@ -113,7 +125,7 @@ layout = [[S_gui.Column(
                                 layout=[
                                     [S_gui.Column(column_names, justification='center',
                                                   vertical_alignment='center')]])]], justification='center',
-                                pad=(7, 7))],
+                  pad=(7, 7))],
     [S_gui.Column([[S_gui.Frame(vertical_alignment='center', title_location=S_gui.TITLE_LOCATION_TOP_RIGHT,
                                 font='david 30 normal', title=':תאורה', layout=[
             [S_gui.Column(column_light, justification='center', vertical_alignment='center')]])]],
