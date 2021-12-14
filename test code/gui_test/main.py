@@ -33,6 +33,7 @@ faucet2_cond_active = False
 faucet2_parameter = ""
 faucet2_mode = ""
 faucet2_stop_value = 0
+recording_rate = 1  # Rate of recording, in seconds
 
 cond_dir = {
     'light': list_v[2],
@@ -126,7 +127,7 @@ f_water = f_fertilizer = False
 
 
 def apply_scenario():
-    global first_run, index, start, delay_timer
+    global first_run, index, start, delay_timer, recording_rate
     file = open(scenario_file_name, 'r')
     lines = file.readlines()
     if first_run:
@@ -138,6 +139,7 @@ def apply_scenario():
             elif lines[loop_i][0] == '}':
                 finish = loop_i - 1
                 break
+        recording_rate = int(lines[start])
         index = start = finish + 2
     index = index + 1
     delay_timer = time.time() + 1
