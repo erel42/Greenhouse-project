@@ -3,24 +3,190 @@ import serial
 import warnings
 import serial.tools.list_ports
 from datetime import datetime
+import time
 
 # Great site: https://pysimplegui.readthedocs.io/en/latest/call%20reference/#button-element
 
 # Connections variables
+list_v = [-1.0, -1.0, -1.0, -1.0, -1.0]
 input_s = input_e = input_f = ""
 add_to_file = False
 writing_entries = False
 read = False
 good = False
+scenario_file_name = ''
+cancel_scenario = False
+run_through_scenario = False
+first_run = True
+index = 0
+start = 0
+
+# More variables
+delay_timer = faucet1_timer = faucet2_timer = 0
+faucet1_timer_active = False
+faucet2_timer_active = False
+faucet1_cond_active = False
+faucet1_parameter = ""
+faucet1_mode = ""
+faucet1_stop_value = 0
+faucet2_cond_active = False
+faucet2_parameter = ""
+faucet2_mode = ""
+faucet2_stop_value = 0
+
+cond_dir = {
+    'light': list_v[2],
+    'temp': list_v[0],
+    'moisture': list_v[3],
+    'humidity': list_v[1]
+}
+
+mode_dir = {
+    '>': True,
+    '<': False
+}
+
+
+def faucet1_set_cond(parameter, mode, value):
+    global faucet1_cond_active, faucet1_parameter, faucet1_mode, faucet1_stop_value
+    faucet1_parameter = parameter
+    faucet1_mode = mode
+    faucet1_stop_value = int(value)
+    faucet1_cond_active = True
+    open_faucet1()
+
+
+def faucet2_set_cond(parameter, mode, value):
+    global faucet2_cond_active, faucet2_parameter, faucet2_mode, faucet2_stop_value
+    faucet2_parameter = parameter
+    faucet2_mode = mode
+    faucet2_stop_value = int(value)
+    faucet2_cond_active = True
+    open_faucet2()
+
+
+faucet_dic_cond = {
+    '1': faucet1_set_cond,
+    '2': faucet2_set_cond,
+}
+
+
+def print_line(input_string):
+    window['-OUTPUT_T-'].update(input_string)
+    apply_scenario()
+
+
+def delay_line(input_string):
+    global delay_timer
+    delay_timer = int(time.time()) + int(input_string)
+
+
+def faucet_line(input_string):
+    global faucet1_timer_active, faucet2_timer_active, faucet1_timer, faucet2_timer
+    variables = input_string.split(' ')
+    if variables[1] == 't':
+        if variables[0] == '1':
+            faucet1_timer = int(time.time()) + int(variables[2])
+            open_faucet1()
+            faucet1_timer_active = True
+        else:
+            faucet2_timer = int(time.time()) + int(variables[2])
+            open_faucet2()
+            faucet2_timer_active = True
+    elif variables[1] == 'v':
+        faucet_dic_cond[variables[0]](variables[2], variables[3], variables[4])
+
+
+def color_line(input_string):
+    global red, green, blue
+    split = input_string.split()
+    red = split[0]
+    green = split[1]
+    blue = split[2]
+    window['-BLUE-'].update(blue)
+    window['-RED-'].update(red)
+    window['-GREEN-'].update(green)
+    ser.write(bytes(('c ' + str(red) + ' ' + str(green) + ' ' + str(blue) + '\n').encode('utf8', 'strict')))
+
+
+scenario_dic = {
+    '@': print_line,
+    'o': faucet_line,
+    's': color_line,
+    'd': delay_line,
+}
 
 # Define the window's contents
 red = green = blue = 0
 prev_value = '#000000'
 down = True
-list_v = [-1.0, -1.0, -1.0, -1.0, -1.0]
 
 # Faucet control
 f_water = f_fertilizer = False
+
+
+def apply_scenario():
+    global first_run, index, start, delay_timer
+    file = open(scenario_file_name, 'r')
+    lines = file.readlines()
+    if first_run:
+        start = finish = 0
+        first_run = False
+        for loop_i in range(0, len(lines)):
+            if lines[loop_i][0] == '{':
+                start = loop_i + 1
+            elif lines[loop_i][0] == '}':
+                finish = loop_i - 1
+                break
+        index = start = finish + 2
+    index = index + 1
+    delay_timer = time.time() + 1
+    scenario_dic[lines[index - 1][0]](lines[index - 1][2:])
+    if index >= len(lines):
+        index = start
+
+
+def open_faucet1():
+    window['-WATER-'].update(image_filename='faucet-image-on.png', image_size=(150, 150),
+                             image_subsample=3)
+    ser.write(bytes(b'3\n'))
+
+
+def open_faucet2():
+    window['-FERTILIZER-'].update(image_filename='fertilizer-png-on.png', image_size=(150, 150),
+                                  image_subsample=3)
+    ser.write(bytes(b'5\n'))
+
+
+def close_faucet1():
+    window['-WATER-'].update(image_filename='faucet-image-off.png', image_size=(150, 150),
+                             image_subsample=3)
+    ser.write(bytes(b'4\n'))
+
+
+def close_faucet2():
+    window['-FERTILIZER-'].update(image_filename='fertilizer-png-off.png', image_size=(150, 150),
+                                  image_subsample=3)
+    ser.write(bytes(b'6\n'))
+
+
+def disable_inputs():
+    window['-FERTILIZER-'].update(disabled=True)
+    window['-WATER-'].update(disabled=True)
+    window['-RECORD-'].update(disabled=True)
+    window['-OPTIONS_REC-'].update(disabled=True)
+    window['-COLOR-'].update(disabled=True)
+    window['-UPDATE-'].update(disabled=True)
+
+
+def enable_inputs():
+    window['-FERTILIZER-'].update(disabled=False)
+    window['-WATER-'].update(disabled=False)
+    window['-RECORD-'].update(disabled=False)
+    window['-OPTIONS_REC-'].update(disabled=False)
+    window['-COLOR-'].update(disabled=False)
+    window['-UPDATE-'].update(disabled=False)
+
 
 # Establishing a connection with a connected arduino
 arduino_ports = [
@@ -107,7 +273,7 @@ column_exit = [[S_gui.Button(button_text='יציאה', font='david 30 normal', k
 
 column_recording = [[S_gui.Button(image_filename='record-image.png', image_size=(150, 150), k='-RECORD-',
                                   tooltip='לחצו כאן כדי להתחיל הקלטת נתונים', image_subsample=3),
-                     S_gui.OptionMenu(values=["פעם בדקה", "פעם ב-5 דקות", "פעם ב-10 דקות"], s=30),
+                     S_gui.OptionMenu(values=["פעם בדקה", "פעם ב-5 דקות", "פעם ב-10 דקות"], s=30, k='-OPTIONS_REC-'),
                      S_gui.Text(text=':תדירות', font='david 30 normal'),
                      S_gui.Button(image_filename='upload-image.png', image_size=(150, 150), k='-UPLOAD-',
                                   tooltip='לחצו כאן כדי לבחור תכנית פעולה')]]
@@ -115,6 +281,8 @@ column_recording = [[S_gui.Button(image_filename='record-image.png', image_size=
 layout = [[S_gui.Column(
     [[S_gui.Text(text='Still loading...', key='-TIME-', justification='left', font='david 16 normal', size=(10, 2),
                  text_color='light grey')]], expand_x=True),
+    S_gui.Text(text='', key='-OUTPUT_T-', justification='center', font='david 16 normal',
+               text_color='red'),
     S_gui.Button(k='-SETTINGS-', image_filename='settings-png.png', image_size=(50, 50), tooltip='הגדרות',
                  image_subsample=10)],
     [S_gui.Column([[S_gui.Text(text='בקרת חממה', justification='center', font='david 44 normal', size=(10, 1),
@@ -152,25 +320,29 @@ while True:
     elif event == '-WATER-':
         f_water = not f_water
         if f_water:
-            window['-WATER-'].update(image_filename='faucet-image-on.png', image_size=(150, 150),
-                                     image_subsample=3)
-            ser.write(bytes(b'3\n'))
+            open_faucet1()
         else:
-            window['-WATER-'].update(image_filename='faucet-image-off.png', image_size=(150, 150),
-                                     image_subsample=3)
-            ser.write(bytes(b'4\n'))
+            close_faucet1()
     elif event == '-FERTILIZER-':
         f_fertilizer = not f_fertilizer
         if f_fertilizer:
-            window['-FERTILIZER-'].update(image_filename='fertilizer-png-on.png', image_size=(150, 150),
-                                          image_subsample=3)
-            ser.write(bytes(b'5\n'))
+            open_faucet2()
         else:
-            window['-FERTILIZER-'].update(image_filename='fertilizer-png-off.png', image_size=(150, 150),
-                                          image_subsample=3)
-            ser.write(bytes(b'6\n'))
+            close_faucet2()
     elif event == '-UPLOAD-':
-        S_gui.popup_get_file(message='בחר תרחיש', title='Choose scenario', keep_on_top=True)
+        if not cancel_scenario:
+            scenario_file_name = S_gui.popup_get_file(message='בחר תרחיש', title='Choose scenario', keep_on_top=True)
+            if scenario_file_name is not None:
+                run_through_scenario = True
+                disable_inputs()
+                window['-UPLOAD-'].update(image_filename='cancel.png')
+                cancel_scenario = True
+        else:
+            cancel_scenario = False
+            run_through_scenario = False
+            first_run = True
+            window['-UPLOAD-'].update(image_filename='upload-image.png')
+            enable_inputs()
 
     elif event == '-SETTINGS-':
         S_gui.popup_cancel(title='Need to switch into settings window', keep_on_top=True)
@@ -245,6 +417,37 @@ while True:
                 i = i + 1
             good = False
         read = False
+
+    if run_through_scenario:
+        if delay_timer <= time.time():
+            apply_scenario()
+
+    if faucet1_timer_active:
+        if faucet1_timer <= time.time():
+            close_faucet1()
+            faucet1_timer_active = False
+    if faucet2_timer_active:
+        if faucet2_timer <= time.time():
+            close_faucet2()
+            faucet2_timer_active = False
+
+    if faucet1_cond_active:
+        if mode_dir[faucet1_mode]:
+            if cond_dir[faucet1_parameter] < faucet1_stop_value:
+                close_faucet2()
+                faucet1_cond_active = False
+        elif cond_dir[faucet1_parameter] > faucet1_stop_value:
+            close_faucet1()
+            faucet1_cond_active = False
+
+    if faucet2_cond_active:
+        if mode_dir[faucet2_mode]:
+            if cond_dir[faucet2_parameter] < faucet2_stop_value:
+                close_faucet2()
+                faucet2_cond_active = False
+        elif cond_dir[faucet2_parameter] > faucet2_stop_value:
+            close_faucet2()
+            faucet2_cond_active = False
 
     if add_to_file:
         # input_f = input_f[1:]

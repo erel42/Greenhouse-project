@@ -10,10 +10,10 @@ pause = 0
 offset = 0
 max_offset = 0
 current_time = time.time()
-# red = green = blue = 0
 _red = _green = _blue = 0
 file = []
 shouts = []
+pre = ['10']
 faucets = ['ברז 1', 'ברז 2']
 modes = ['לפי זמן', 'לפי ערך']
 parameters = ['אור', 'לחות באויר', 'לחות באדמה', 'טמפרטורה']
@@ -39,12 +39,30 @@ for i in range(1, linesOnScreen + 1):
     shouts.append('')
 
 
+def generateSettings():
+    success = False
+    while not success:
+        status, pop_values = sg.Window('הגדרות נוספות',
+                                       [[sg.Input(default_text='10'), sg.T(':תדירות הקלטה בדקות'),
+                                         sg.Button('החל', s=10), sg.Button('בטל', s=10)]],
+                                       disable_close=True).read(close=True)
+        if status == 'בטל':
+            return
+        try:
+            int(pop_values[0])
+            pre[0] = pop_values[0]
+            break
+        except:
+            sg.popup_error('קלא לא תקין!')
+    print(pre[0])
+
+
 def cycleBackLines(_values, _window):
     global offset, max_offset, shouts, file
     offset -= 1
     for i in range(2, linesOnScreen + 1):
         _window['-Header' + str(i) + '-'].update(values['-Header' + str(i - 1) + '-'])
-        _window['-Line' + str(i) + '-'].update(str(i + offset) + ': ')
+        _window['-Line' + str(i) + '-'].update(': ' + str(i + offset))
         window['-Text' + str(i) + '-'].update(shouts[i + offset - 1])
     try:
         if file[offset][0] == 'o':
@@ -57,7 +75,7 @@ def cycleBackLines(_values, _window):
             _window['-Header1-'].update('')
     except:
         _window['-Header1-'].update('')
-    _window['-Line1-'].update(str(offset + 1) + ': ')
+    _window['-Line1-'].update(': ' + str(offset + 1))
     _window['-Text1-'].update(shouts[offset])
 
 
@@ -70,10 +88,10 @@ def cycleLines(_values, _window):
         shouts.append('')
     for i in range(1, linesOnScreen):
         _window['-Header' + str(i) + '-'].update(values['-Header' + str(i + 1) + '-'])
-        _window['-Line' + str(i) + '-'].update(str(i + offset) + ': ')
+        _window['-Line' + str(i) + '-'].update(': ' + str(i + offset))
         window['-Text' + str(i) + '-'].update(shouts[i + offset - 1])
     _window['-Header' + str(linesOnScreen) + '-'].update('')
-    _window['-Line' + str(linesOnScreen) + '-'].update(str(linesOnScreen + offset) + ': ')
+    _window['-Line' + str(linesOnScreen) + '-'].update(': ' + str(linesOnScreen + offset))
     _window['-Text' + str(linesOnScreen) + '-'].update('')
 
 
@@ -248,30 +266,42 @@ sg.theme('DarkAmber')  # Keep things interesting for your users
 
 layout = [[sg.Text('Color: 0 0 0', k='-C-', visible=False)],
           [sg.Text('Persistent window', k='-TXT-', visible=False)],
-          [sg.Button('צור קובץ', k='-CREATE-'), sg.Button('גלגל מעלה', k='-LINE-'),
+          [sg.Button('צור קובץ', k='-CREATE-')],
+          [sg.Button('הגדרות נוספות', k='-ADDITIONALINFO-'), sg.Button('גלגל מעלה', k='-LINE-'),
            sg.Button('גלגל מטה', k='-LINEBACK-'), sg.Exit()]]
 
 # Generating input lines
 for i in range(1, linesOnScreen + 1):
-    layout.append([sg.Text(str(i) + ': ', k='-Line' + str(i) + '-', size=(5, 1)),
-                   sg.DropDown(['ברזים', 'תאורה', 'השהייה'], k='-Header' + str(i) + '-'),
+    layout.append([sg.Text('', k='-Text' + str(i) + '-'),
                    sg.Button('הגדר', k='CONF' + str(i)),
-                   sg.Text('', k='-Text' + str(i) + '-')])
+                   sg.DropDown(['ברזים', 'תאורה', 'השהייה'], k='-Header' + str(i) + '-'),
+                   sg.Text(': ' + str(i), k='-Line' + str(i) + '-', size=(5, 1), justification='right')])
 
-window = sg.Window('Window that stays open', layout, font='david 18 normal').finalize()
+window = sg.Window('יצירת קובץ אוטומטי', layout, font='david 18 normal', element_justification='right').finalize()
 window.maximize()
 
 while True:  # The Event Loop
     event, values = window.read(timeout=50)
     current_time = time.time()
-    if event == sg.WIN_CLOSED or event == 'Exit':
+    if event == sg.WIN_CLOSED:
         break
+    elif event == 'Exit':
+        e_status = sg.popup_yes_no("האם אתם בטוחים שאתם רוצים לצאת?", title='Exit screen', keep_on_top=True)
+        if e_status == 'Yes':
+            break
     elif event == '-CREATE-':
         status, pop_values = sg.Window('בחירת שם', [[sg.T('בחרו שם קובץ')],
                                                     [sg.Input(default_text='Scenario', k='-NAME-'),
                                                      sg.Button('החל', s=10), sg.Button('בטל', s=10)]],
                                        disable_close=True).read(close=True)
+        if status == 'בטל':
+            continue
         file_write = open(pop_values['-NAME-'] + '.txt', 'w')
+        file_write.write('{\n')
+        for i in range(0, len(pre)):
+            file_write.write(pre[i])
+            file_write.write('\n')
+        file_write.write('}\n')
         for i in range(0, len(file)):
             if file[i] != '':
                 file_write.write('@ ' + shouts[i] + '\n')
@@ -294,5 +324,6 @@ while True:  # The Event Loop
     elif event == '-LINEBACK-':
         if offset > 0:
             cycleBackLines(values, window)
-
+    elif event == '-ADDITIONALINFO-':
+        generateSettings()
     applyScenario()
