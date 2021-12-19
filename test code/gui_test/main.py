@@ -7,7 +7,37 @@ import time
 
 # Great site: https://pysimplegui.readthedocs.io/en/latest/call%20reference/#button-element
 
+showThemeSelect = True
+
+if showThemeSelect:
+    S_gui.popup_quick_message('Hang on for a moment, this will take a bit to create...', background_color='red',
+                              text_color='white', auto_close=True, non_blocking=True)
+    temp_layout = []
+    names = S_gui.list_of_look_and_feel_values()
+    names.sort()
+    row = []
+    for count, theme in enumerate(names):
+        S_gui.change_look_and_feel(theme)
+        if not count % 6:
+            temp_layout += [row]
+            row = []
+        row += [
+            S_gui.Frame(theme,
+                        [[S_gui.Text('Preview for this theme:'), S_gui.InputText('Input data here', size=(10, 1))],
+                         [S_gui.Button('Ok', k=theme), S_gui.Button('Cancel', disabled=True)]])]
+    if row:
+        temp_layout += [row]
+
+    select_win = S_gui.Window('Select a theme!',
+                              [[S_gui.Column(temp_layout, scrollable=True, vertical_scroll_only=True)]],
+                              element_justification='Center', finalize=True)
+    select_win.maximize()
+    selected, num2 = select_win.read()
+    S_gui.theme(selected)
+    select_win.close()
+
 # Connections variables
+file = lines = 0
 list_v = [-1.0, -1.0, -1.0, -1.0, -1.0]
 input_s = input_e = input_f = ""
 add_to_file = False
@@ -20,8 +50,10 @@ run_through_scenario = False
 first_run = True
 index = 0
 start = 0
+end_time = 0
 
 # More variables
+flow = 1
 delay_timer = faucet1_timer = faucet2_timer = 0
 faucet1_timer_active = False
 faucet2_timer_active = False
@@ -36,15 +68,21 @@ faucet2_stop_value = 0
 recording_rate = 1  # Rate of recording, in seconds
 
 cond_dir = {
-    'light': list_v[2],
-    'temp': list_v[0],
-    'moisture': list_v[3],
-    'humidity': list_v[1]
+    'light': 2,
+    'temp': 0,
+    'moisture': 3,
+    'humidity': 1
 }
 
 mode_dir = {
     '>': True,
     '<': False
+}
+
+options_dir = {
+    'פעם ב-10 דקות': 10,
+    'פעם ב-5 דקות': 5,
+    'פעם בדקה': 1
 }
 
 
@@ -83,7 +121,7 @@ def delay_line(input_string):
 
 
 def faucet_line(input_string):
-    global faucet1_timer_active, faucet2_timer_active, faucet1_timer, faucet2_timer
+    global faucet1_timer_active, faucet2_timer_active, faucet1_timer, faucet2_timer, flow
     variables = input_string.split(' ')
     if variables[1] == 't':
         if variables[0] == '1':
@@ -96,6 +134,15 @@ def faucet_line(input_string):
             faucet2_timer_active = True
     elif variables[1] == 'v':
         faucet_dic_cond[variables[0]](variables[2], variables[3], variables[4])
+    elif variables[1] == 'f':
+        if variables[0] == '1':
+            faucet1_timer = int(time.time()) + (int(variables[2]) / ((flow * 1000) / 3600))
+            open_faucet1()
+            faucet1_timer_active = True
+        else:
+            faucet2_timer = int(time.time()) + int(variables[2] * 1000 * 3600)
+            open_faucet2()
+            faucet2_timer_active = True
 
 
 def color_line(input_string):
@@ -127,10 +174,10 @@ f_water = f_fertilizer = False
 
 
 def apply_scenario():
-    global first_run, index, start, delay_timer, recording_rate
-    file = open(scenario_file_name, 'r')
-    lines = file.readlines()
+    global first_run, index, start, delay_timer, recording_rate, end_time, file, lines
     if first_run:
+        file = open(scenario_file_name, 'r')
+        lines = file.readlines()
         start = finish = 0
         first_run = False
         for loop_i in range(0, len(lines)):
@@ -141,10 +188,12 @@ def apply_scenario():
                 break
         recording_rate = int(lines[start])
         index = start = finish + 2
-    index = index + 1
-    delay_timer = time.time() + 1
-    scenario_dic[lines[index - 1][0]](lines[index - 1][2:])
-    if index >= len(lines):
+        end_time = time.time() + 86400
+    if index < len(lines):
+        index = index + 1
+        delay_timer = time.time() + 1
+        scenario_dic[lines[index - 1][0]](lines[index - 1][2:])
+    if end_time <= time.time():
         index = start
 
 
@@ -225,32 +274,22 @@ ser = serial.Serial(arduino_ports[0], 9600, timeout=0, parity=serial.PARITY_NONE
 
 # The sensor values row
 column_names = [
-    [S_gui.Text(text='Ph', justification='center', font='david 30 normal', size=(10, 2), pad=(10, 10),
-                text_color='black'),
-     S_gui.Text(text='לחות - אדמה', justification='center', size=(10, 2), pad=(14, 10), font='david 30 normal',
-                text_color='black'),
-     S_gui.Text(text='אור', justification='center', font='david 30 normal', size=(10, 2), pad=(12, 10),
-                text_color='black'),
-     S_gui.Text(text='לחות - אויר', justification='center', font='david 30 normal', size=(10, 2), pad=(12, 10),
-                text_color='black'),
-     S_gui.Text(text='טמפרטורה', justification='center', font='david 30 normal', size=(10, 2), pad=(14, 10),
-                text_color='black')],
+    [S_gui.Text(text='Ph', justification='center', font='david 30 normal', size=(10, 2), pad=(10, 10)),
+     S_gui.Text(text='לחות - אדמה', justification='center', size=(10, 2), pad=(14, 10), font='david 30 normal'),
+     S_gui.Text(text='אור', justification='center', font='david 30 normal', size=(10, 2), pad=(12, 10)),
+     S_gui.Text(text='לחות - אויר', justification='center', font='david 30 normal', size=(10, 2), pad=(12, 10)),
+     S_gui.Text(text='טמפרטורה', justification='center', font='david 30 normal', size=(10, 2), pad=(14, 10))],
     # New row, now we show the values
     [S_gui.Frame(title='', relief=S_gui.RELIEF_RAISED, background_color='grey', layout=[
-        [S_gui.Text(text='loading...', justification='center', k='-PH-', font='david 30 normal', size=(10, 1),
-                    text_color='black')]]),
+        [S_gui.Text(text='loading...', justification='center', k='-PH-', font='david 30 normal', size=(10, 1))]]),
      S_gui.Frame(title='', relief=S_gui.RELIEF_RAISED, background_color='grey', vertical_alignment='center', layout=[
-         [S_gui.Text(text='loading...', justification='center', k='-gHum-', font='david 30 normal', size=(10, 1),
-                     text_color='black')]]),
+         [S_gui.Text(text='loading...', justification='center', k='-gHum-', font='david 30 normal', size=(10, 1))]]),
      S_gui.Frame(title='', background_color='grey', relief=S_gui.RELIEF_RAISED, layout=[
-         [S_gui.Text(text='loading...', justification='center', k='-light-', font='david 30 normal', size=(10, 1),
-                     text_color='black')]]),
+         [S_gui.Text(text='loading...', justification='center', k='-light-', font='david 30 normal', size=(10, 1))]]),
      S_gui.Frame(title='', background_color='grey', relief=S_gui.RELIEF_RAISED, layout=[
-         [S_gui.Text(text='loading...', justification='center', k='-hum-', font='david 30 normal', size=(10, 1),
-                     text_color='black')]]),
+         [S_gui.Text(text='loading...', justification='center', k='-hum-', font='david 30 normal', size=(10, 1))]]),
      S_gui.Frame(title='', background_color='grey', relief=S_gui.RELIEF_RAISED, layout=[
-         [S_gui.Text(text='loading...', justification='center', k='-temp-', font='david 30 normal', size=(10, 1),
-                     text_color='black')]])]]
+         [S_gui.Text(text='loading...', justification='center', k='-temp-', font='david 30 normal', size=(10, 1))]])]]
 
 # The RGB controller row
 column_light = [[S_gui.Button(button_text='החל', font='david 30 normal', k='-UPDATE-'),
@@ -331,6 +370,9 @@ while True:
             open_faucet2()
         else:
             close_faucet2()
+    elif event == '-RECORD-':
+        recording_rate = options_dir[values['-OPTIONS_REC-']]
+        print(recording_rate)
     elif event == '-UPLOAD-':
         if not cancel_scenario:
             scenario_file_name = S_gui.popup_get_file(message='בחר תרחיש', title='Choose scenario', keep_on_top=True)
@@ -347,7 +389,21 @@ while True:
             enable_inputs()
 
     elif event == '-SETTINGS-':
-        S_gui.popup_cancel(title='Need to switch into settings window', keep_on_top=True)
+        success = False
+        while not success:
+            status, pop_values = S_gui.Window('הגדרות נוספות', [
+                [S_gui.Input(default_text='1'), S_gui.T(':ספיקה בליטרים לשעה')],
+                [S_gui.Button('החל', s=10), S_gui.Button('בטל', s=10)]],
+                                              disable_close=True, element_justification='Right', keep_on_top=True).read(
+                close=True)
+            if status != 'בטל':
+                try:
+                    flow = float(pop_values[0])
+                    success = True
+                except:
+                    S_gui.popup_error('קלא לא תקין!')
+            else:
+                success = True
 
     elif event == '-UPDATE-':
         if prev_value != values['-C-']:
@@ -435,19 +491,19 @@ while True:
 
     if faucet1_cond_active:
         if mode_dir[faucet1_mode]:
-            if cond_dir[faucet1_parameter] < faucet1_stop_value:
-                close_faucet2()
+            if list_v[cond_dir[faucet1_parameter]] < faucet1_stop_value:
+                close_faucet1()
                 faucet1_cond_active = False
-        elif cond_dir[faucet1_parameter] > faucet1_stop_value:
+        elif list_v[cond_dir[faucet1_parameter]] > faucet1_stop_value:
             close_faucet1()
             faucet1_cond_active = False
 
     if faucet2_cond_active:
         if mode_dir[faucet2_mode]:
-            if cond_dir[faucet2_parameter] < faucet2_stop_value:
+            if list_v[cond_dir[faucet2_parameter]] < faucet2_stop_value:
                 close_faucet2()
                 faucet2_cond_active = False
-        elif cond_dir[faucet2_parameter] > faucet2_stop_value:
+        elif list_v[cond_dir[faucet2_parameter]] > faucet2_stop_value:
             close_faucet2()
             faucet2_cond_active = False
 

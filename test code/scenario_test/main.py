@@ -11,11 +11,12 @@ offset = 0
 max_offset = 0
 current_time = time.time()
 _red = _green = _blue = 0
+flow = 1.0  # Liters per hour
 file = []
 shouts = []
 pre = ['10']
 faucets = ['ברז 1', 'ברז 2']
-modes = ['לפי זמן', 'לפי ערך']
+modes = ['לפי זמן', 'לפי ערך', 'לפי ספיקות']
 parameters = ['אור', 'לחות באויר', 'לחות באדמה', 'טמפרטורה']
 _type = ['-גדול מ', '-קטן מ']
 
@@ -40,12 +41,13 @@ for i in range(1, linesOnScreen + 1):
 
 
 def generateSettings():
+    global flow
     success = False
     while not success:
         status, pop_values = sg.Window('הגדרות נוספות',
-                                       [[sg.Input(default_text='10'), sg.T(':תדירות הקלטה בדקות'),
-                                         sg.Button('החל', s=10), sg.Button('בטל', s=10)]],
-                                       disable_close=True).read(close=True)
+                                       [[sg.Input(default_text='10'), sg.T(':תדירות הקלטה בדקות')],
+                                        [sg.Button('החל', s=10), sg.Button('בטל', s=10)]],
+                                       disable_close=True, element_justification='Right').read(close=True)
         if status == 'בטל':
             return
         try:
@@ -99,32 +101,6 @@ def printLine(line_count, _line):
     window['-TXT-'].update("Line{}: {}".format(line_count, _line.strip()))
 
 
-def applyScenario():
-    global pause
-    global count
-    if pause <= current_time:
-        line = Lines[count]
-        count += 1
-        while line[0] == '#' and not debug:
-            if count >= len(Lines):
-                count = 0
-            line = Lines[count]
-            count += 1
-        if line[0] == '#' or line[0] == '@':
-            printLine(count, line)
-        elif line[0] == 'd':
-            line = line[2:]
-            pause = current_time + int(line)
-        elif line[0] == 'o':
-            print('need to implement')
-        elif line[0] == 's':
-            line = line[2:]
-            window['-C-'].update("Color: {}".format(line.strip()))
-
-        if count >= len(Lines):
-            count = 0
-
-
 def lightPopup(index):
     str_to_send = ''
     str_to_show = ''
@@ -162,6 +138,7 @@ def lightPopup(index):
 
 
 def faucetPopup(index):
+    global flow
     success = False
     mode = ''
     f_number = 0
@@ -207,6 +184,23 @@ def faucetPopup(index):
                     sg.popup_error('אנא הכניסו ערכים תקינים')
                     continue
             sg.popup_error('אנא הכניסו ערכים תקינים')
+    elif mode == 'לפי ספיקות':
+        while not success:
+            _flow = 0
+            status, pop_values = sg.Window('בחירת ספיקות',
+                                           [[sg.T('בחרו כמות מים רצויה בסמק')],
+                                            [sg.Input(default_text='0', k='-FLOW-'),
+                                             sg.Button('החל', s=10), sg.Button('בטל', s=10)]],
+                                           disable_close=True).read(close=True)
+            if status == 'בטל':
+                return
+            try:
+                _flow = int(pop_values['-FLOW-'])
+                str_to_send = 'o ' + faucet + ' f ' + str(_flow)
+                str_to_show = 'פותח את ברז ' + faucet + ' על מנת שיזרמו ' + str(_flow) + ' סמק של מים'
+                break
+            except:
+                sg.popup_error('אנא הכניסו ערכים תקינים')
     else:
         while not success:
             status, pop_values = sg.Window('בחירת זמן',
@@ -326,4 +320,3 @@ while True:  # The Event Loop
             cycleBackLines(values, window)
     elif event == '-ADDITIONALINFO-':
         generateSettings()
-    applyScenario()
