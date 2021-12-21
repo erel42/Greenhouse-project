@@ -4,11 +4,17 @@ import warnings
 import serial.tools.list_ports
 from datetime import datetime
 import time
+import json
 
 # Great site: https://pysimplegui.readthedocs.io/en/latest/call%20reference/#button-element
 
-showThemeSelect = True
+with open('settings.json', 'r') as read_file:
+    settings_data = json.load(read_file)
 
+showThemeSelect = settings_data['showThemeSelect']
+S_gui.theme(settings_data['defaultTheme'])
+default_theme = theme = settings_data['defaultTheme']
+flow = settings_data['flow']
 if showThemeSelect:
     S_gui.popup_quick_message('Hang on for a moment, this will take a bit to create...', background_color='red',
                               text_color='white', auto_close=True, non_blocking=True)
@@ -34,6 +40,7 @@ if showThemeSelect:
     select_win.maximize()
     selected, num2 = select_win.read()
     S_gui.theme(selected)
+    theme = selected
     select_win.close()
 
 # Connections variables
@@ -53,7 +60,6 @@ start = 0
 end_time = 0
 
 # More variables
-flow = 1
 delay_timer = faucet1_timer = faucet2_timer = 0
 faucet1_timer_active = False
 faucet2_timer_active = False
@@ -392,13 +398,25 @@ while True:
         success = False
         while not success:
             status, pop_values = S_gui.Window('הגדרות נוספות', [
-                [S_gui.Input(default_text='1'), S_gui.T(':ספיקה בליטרים לשעה')],
+                [S_gui.Input(default_text=flow), S_gui.T(':ספיקה בליטרים לשעה')],
+                [S_gui.Checkbox('הגדר כערכת נושא ברירת מחדל', default=True if theme is default_theme else False)],
+                [S_gui.Checkbox('הצג בחירת ערכת  נושא', default=showThemeSelect)],
                 [S_gui.Button('החל', s=10), S_gui.Button('בטל', s=10)]],
                                               disable_close=True, element_justification='Right', keep_on_top=True).read(
                 close=True)
             if status != 'בטל':
                 try:
                     flow = float(pop_values[0])
+                    with open('settings.json', 'r') as read_file:
+                        data = json.load(read_file)
+                    data['flow'] = flow
+                    if pop_values[1]:
+                        data['defaultTheme'] = theme
+                        default_theme = theme
+                    showThemeSelect = pop_values[2]
+                    data['showThemeSelect'] = showThemeSelect
+                    with open('settings.json', 'w') as write_settings_file:
+                        json.dump(data, write_settings_file)
                     success = True
                 except:
                     S_gui.popup_error('קלא לא תקין!')
