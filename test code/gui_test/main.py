@@ -8,6 +8,7 @@ import json
 
 # Great site: https://pysimplegui.readthedocs.io/en/latest/call%20reference/#button-element
 
+# Reading settings
 with open('settings.json', 'r') as read_file:
     settings_data = json.load(read_file)
 
@@ -15,6 +16,8 @@ showThemeSelect = settings_data['showThemeSelect']
 S_gui.theme(settings_data['defaultTheme'])
 default_theme = theme = settings_data['defaultTheme']
 flow = settings_data['flow']
+
+# Theme selector
 if showThemeSelect:
     S_gui.popup_quick_message('Hang on for a moment, this will take a bit to create...', background_color='red',
                               text_color='white', auto_close=True, non_blocking=True)
@@ -176,7 +179,7 @@ prev_value = '#000000'
 down = True
 
 # Faucet control
-f_water = f_fertilizer = False
+f_water = f_fertilizer = True
 
 
 def apply_scenario():
@@ -204,24 +207,32 @@ def apply_scenario():
 
 
 def open_faucet1():
+    global f_water
+    f_water = False
     window['-WATER-'].update(image_filename='faucet-image-on.png', image_size=(150, 150),
                              image_subsample=3)
     ser.write(bytes(b'3\n'))
 
 
 def open_faucet2():
+    global f_fertilizer
+    f_fertilizer = False
     window['-FERTILIZER-'].update(image_filename='fertilizer-png-on.png', image_size=(150, 150),
                                   image_subsample=3)
     ser.write(bytes(b'5\n'))
 
 
 def close_faucet1():
+    global f_water
+    f_water = True
     window['-WATER-'].update(image_filename='faucet-image-off.png', image_size=(150, 150),
                              image_subsample=3)
     ser.write(bytes(b'4\n'))
 
 
 def close_faucet2():
+    global f_fertilizer
+    f_fertilizer = True
     window['-FERTILIZER-'].update(image_filename='fertilizer-png-off.png', image_size=(150, 150),
                                   image_subsample=3)
     ser.write(bytes(b'6\n'))
@@ -365,13 +376,11 @@ while True:
     if event == S_gui.WINDOW_CLOSED:
         break
     elif event == '-WATER-':
-        f_water = not f_water
         if f_water:
             open_faucet1()
         else:
             close_faucet1()
     elif event == '-FERTILIZER-':
-        f_fertilizer = not f_fertilizer
         if f_fertilizer:
             open_faucet2()
         else:
