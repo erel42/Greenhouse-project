@@ -1,5 +1,5 @@
 import PySimpleGUI as S_gui
-import serial
+import serial  # Check if needed
 import warnings
 import serial.tools.list_ports
 from datetime import datetime
@@ -9,11 +9,15 @@ import json
 
 # Great site: https://pysimplegui.readthedocs.io/en/latest/call%20reference/#button-element
 
+showThemeSelect = False
+theme = default_theme = flow = existing_file_path = existing_file = None
+
+
 # Reading settings
-def readSettings():
+def read_settings():
     global showThemeSelect, theme, default_theme, flow, existing_file_path, existing_file
-    with open('settings.json', 'r') as read_file:
-        settings_data = json.load(read_file)
+    with open('settings.json', 'r') as read_settings_file:
+        settings_data = json.load(read_settings_file)
 
     showThemeSelect = settings_data['showThemeSelect']
     S_gui.theme(settings_data['defaultTheme'])
@@ -23,7 +27,7 @@ def readSettings():
     existing_file_path = settings_data['WriteToAnExistingFilePath']
 
 
-readSettings()
+read_settings()
 
 
 def update_settings(_flow, _pop_values):
@@ -40,8 +44,8 @@ def update_settings(_flow, _pop_values):
     data['WriteToAnExistingFile'] = existing_file
     if _pop_values[3]:
         data['WriteToAnExistingFilePath'] = existing_file_path
-    with open('settings.json', 'w') as write_settings_file:
-        json.dump(data, write_settings_file, indent=4)
+    with open('settings.json', 'w') as _write_settings_file:
+        json.dump(data, _write_settings_file, indent=4)
     success = True
 
 
@@ -76,7 +80,7 @@ if showThemeSelect:
 
 # Connections variables
 file = lines = 0
-list_v = [-1.0, -2.0, -3.0, -4.0, -5.0]
+list_v = [-1.0, -1.0, -1.0, -1.0, -1.0]
 input_s = input_e = input_f = ""
 add_to_file = False
 writing_entries = False
@@ -126,22 +130,17 @@ options_dic = {
 }
 
 
-def start_recording_file(_values, write_to_existing_file=False):
-    try:
-        temp_value = options_dic[_values['-OPTIONS_REC-']]
-        global writing_entries, csv_file_name, recording_rate, recording_file
-        writing_entries = True
-        csv_file_name = "Recording_file_" + str(int(time.time())) + ".csv"
-        recording_rate = options_dic[_values['-OPTIONS_REC-']]
-        if write_to_existing_file:
-            recording_file = open(csv_file_name, "a")
-        else:
-            recording_file = open(csv_file_name, "w")
-            recording_file.write(
-                'זמן' + ',' + 'טמפרטורה' + ',' + 'לחות - אויר' + ',' + 'אור' + ',' + 'לחות - אדמה' + ',' + 'ph' + '\n')
-        window['-RECORD-'].update(image_filename='cancel.png')
-    except:
-        S_gui.popup_error(title='Recording rate not set', keep_on_top=True)
+def start_recording_file():
+    global writing_entries, csv_file_name, recording_file
+    writing_entries = True
+    csv_file_name = "Recording_file_" + str(int(time.time())) + ".csv"
+    if existing_file:
+        recording_file = open(existing_file_path, "a")
+    else:
+        recording_file = open(csv_file_name, "w")
+        recording_file.write(
+            'זמן' + ',' + 'טמפרטורה' + ',' + 'לחות - אויר' + ',' + 'אור' + ',' + 'לחות - אדמה' + ',' + 'ph' + '\n')
+    window['-RECORD-'].update(image_filename='cancel.png')
 
 
 def stop_recording_file():
@@ -445,13 +444,17 @@ while True:
         if writing_entries:
             stop_recording_file()
         else:
-            start_recording_file(values)
+            try:
+                recording_rate = options_dic[values['-OPTIONS_REC-']]
+                start_recording_file()
+            except:
+                S_gui.popup_error('Recording rate not set', keep_on_top=True)
     elif event == '-UPLOAD-':
         if not cancel_scenario:
             scenario_file_name = S_gui.popup_get_file(message='בחר תרחיש', title='Choose scenario', keep_on_top=True)
             if scenario_file_name is not None:
                 run_through_scenario = True
-                start_recording_file(values)
+                start_recording_file()
                 disable_inputs()
                 window['-UPLOAD-'].update(image_filename='cancel.png')
                 cancel_scenario = True
@@ -492,7 +495,7 @@ while True:
                     tempData = json.load(read_file)
                 with open('settings.json', 'w') as write_settings_file:
                     json.dump(tempData, write_settings_file, indent=4)
-                readSettings()
+                read_settings()
                 success = True
             else:
                 success = True
