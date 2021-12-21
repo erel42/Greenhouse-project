@@ -48,10 +48,11 @@ if showThemeSelect:
 
 # Connections variables
 file = lines = 0
-list_v = [-1.0, -1.0, -1.0, -1.0, -1.0]
+list_v = [-1.0, -2.0, -3.0, -4.0, -5.0]
 input_s = input_e = input_f = ""
 add_to_file = False
 writing_entries = False
+recording_file = None
 read = False
 good = False
 scenario_file_name = ''
@@ -61,6 +62,8 @@ first_run = True
 index = 0
 start = 0
 end_time = 0
+recording_timer = 0
+csv_file_name = "TempName.csv"
 
 # More variables
 delay_timer = faucet1_timer = faucet2_timer = 0
@@ -76,23 +79,39 @@ faucet2_mode = ""
 faucet2_stop_value = 0
 recording_rate = 1  # Rate of recording, in seconds
 
-cond_dir = {
+cond_dic = {
     'light': 2,
     'temp': 0,
     'moisture': 3,
     'humidity': 1
 }
 
-mode_dir = {
+mode_dic = {
     '>': True,
     '<': False
 }
 
-options_dir = {
+options_dic = {
     'פעם ב-10 דקות': 10,
     'פעם ב-5 דקות': 5,
     'פעם בדקה': 1
 }
+
+
+def start_recording_file(_values):
+    global writing_entries, csv_file_name, recording_rate, recording_file
+    writing_entries = True
+    csv_file_name = "Recording_file_" + str(int(time.time())) + ".csv"
+    recording_rate = options_dic[_values['-OPTIONS_REC-']]
+    recording_file = open(csv_file_name, "w")
+    recording_file.write(
+        'זמן' + ',' + 'טמפרטורה' + ',' + 'לחות - אויר' + ',' + 'אור' + ',' + 'לחות - אדמה' + ',' + 'ph' + '\n')
+
+
+def stop_recording_file():
+    global writing_entries, recording_file
+    writing_entries = False
+    recording_file.close()
 
 
 def faucet1_set_cond(parameter, mode, value):
@@ -386,8 +405,12 @@ while True:
         else:
             close_faucet2()
     elif event == '-RECORD-':
-        recording_rate = options_dir[values['-OPTIONS_REC-']]
-        print(recording_rate)
+        if writing_entries:
+            stop_recording_file()
+            window['-RECORD-'].update(image_filename='record-image.png', image_subsample=3)
+        else:
+            window['-RECORD-'].update(image_filename='cancel.png')
+            start_recording_file(values)
     elif event == '-UPLOAD-':
         if not cancel_scenario:
             scenario_file_name = S_gui.popup_get_file(message='בחר תרחיש', title='Choose scenario', keep_on_top=True)
@@ -463,7 +486,7 @@ while True:
             break
 
     window['-TIME-'].update(datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
-    window['-PH-'].update(list_v[4])
+    window['-PH-'].update(str(list_v[4]))
     window['-hum-'].update(str(list_v[1]) + '%')
     window['-gHum-'].update(str(list_v[3]) + '%')
     window['-light-'].update(str(list_v[2]) + ' LUX')
@@ -477,8 +500,6 @@ while True:
         input_f += input_e
         if input_f[0] == 'r':
             read = True
-        if writing_entries:
-            add_to_file = True
 
     if read:
         print(input_f)
@@ -517,31 +538,30 @@ while True:
             faucet2_timer_active = False
 
     if faucet1_cond_active:
-        if mode_dir[faucet1_mode]:
-            if list_v[cond_dir[faucet1_parameter]] < faucet1_stop_value:
+        if mode_dic[faucet1_mode]:
+            if list_v[cond_dic[faucet1_parameter]] < faucet1_stop_value:
                 close_faucet1()
                 faucet1_cond_active = False
-        elif list_v[cond_dir[faucet1_parameter]] > faucet1_stop_value:
+        elif list_v[cond_dic[faucet1_parameter]] > faucet1_stop_value:
             close_faucet1()
             faucet1_cond_active = False
 
     if faucet2_cond_active:
-        if mode_dir[faucet2_mode]:
-            if list_v[cond_dir[faucet2_parameter]] < faucet2_stop_value:
+        if mode_dic[faucet2_mode]:
+            if list_v[cond_dic[faucet2_parameter]] < faucet2_stop_value:
                 close_faucet2()
                 faucet2_cond_active = False
-        elif list_v[cond_dir[faucet2_parameter]] > faucet2_stop_value:
+        elif list_v[cond_dic[faucet2_parameter]] > faucet2_stop_value:
             close_faucet2()
             faucet2_cond_active = False
 
-    if add_to_file:
-        # input_f = input_f[1:]
-        input_f = input_f.replace('\n', '')
-        print(input_f)
-        f = open("demofile2.csv", "a")
-        f.write(input_f)
-        f.close()
-        input_s = input_e = input_f = ""
-        add_to_file = False
+    if writing_entries:
+        if recording_timer < time.time():
+            recording_file.write(
+                datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ',' + str(list_v[0]) + ',' + str(list_v[1]) + ',' + str(
+                    list_v[2]) + ',' + str(list_v[3]) + ',' + str(list_v[4]) + '\n')
+            input_s = input_e = input_f = ""
+            add_to_file = False
+            recording_timer = time.time() + (recording_rate * 60)
 
 window.close()
