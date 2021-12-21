@@ -6,16 +6,44 @@ from datetime import datetime
 import time
 import json
 
+
 # Great site: https://pysimplegui.readthedocs.io/en/latest/call%20reference/#button-element
 
 # Reading settings
-with open('settings.json', 'r') as read_file:
-    settings_data = json.load(read_file)
+def readSettings():
+    global showThemeSelect, theme, default_theme, flow, existing_file_path, existing_file
+    with open('settings.json', 'r') as read_file:
+        settings_data = json.load(read_file)
 
-showThemeSelect = settings_data['showThemeSelect']
-S_gui.theme(settings_data['defaultTheme'])
-default_theme = theme = settings_data['defaultTheme']
-flow = settings_data['flow']
+    showThemeSelect = settings_data['showThemeSelect']
+    S_gui.theme(settings_data['defaultTheme'])
+    default_theme = theme = settings_data['defaultTheme']
+    flow = settings_data['flow']
+    existing_file = settings_data['WriteToAnExistingFile']
+    existing_file_path = settings_data['WriteToAnExistingFilePath']
+
+
+readSettings()
+
+
+def update_settings(_flow, _pop_values):
+    global success, showThemeSelect, default_theme, flow, existing_file
+    with open('settings.json', 'r') as read_file:
+        data = json.load(read_file)
+    data['flow'] = _flow
+    if _pop_values[1]:
+        data['defaultTheme'] = theme
+        default_theme = theme
+    showThemeSelect = _pop_values[2]
+    data['showThemeSelect'] = showThemeSelect
+    existing_file = _pop_values[3]
+    data['WriteToAnExistingFile'] = existing_file
+    if _pop_values[3]:
+        data['WriteToAnExistingFilePath'] = existing_file_path
+    with open('settings.json', 'w') as write_settings_file:
+        json.dump(data, write_settings_file, indent=4)
+    success = True
+
 
 # Theme selector
 if showThemeSelect:
@@ -98,20 +126,29 @@ options_dic = {
 }
 
 
-def start_recording_file(_values):
-    global writing_entries, csv_file_name, recording_rate, recording_file
-    writing_entries = True
-    csv_file_name = "Recording_file_" + str(int(time.time())) + ".csv"
-    recording_rate = options_dic[_values['-OPTIONS_REC-']]
-    recording_file = open(csv_file_name, "w")
-    recording_file.write(
-        'זמן' + ',' + 'טמפרטורה' + ',' + 'לחות - אויר' + ',' + 'אור' + ',' + 'לחות - אדמה' + ',' + 'ph' + '\n')
+def start_recording_file(_values, write_to_existing_file=False):
+    try:
+        temp_value = options_dic[_values['-OPTIONS_REC-']]
+        global writing_entries, csv_file_name, recording_rate, recording_file
+        writing_entries = True
+        csv_file_name = "Recording_file_" + str(int(time.time())) + ".csv"
+        recording_rate = options_dic[_values['-OPTIONS_REC-']]
+        if write_to_existing_file:
+            recording_file = open(csv_file_name, "a")
+        else:
+            recording_file = open(csv_file_name, "w")
+            recording_file.write(
+                'זמן' + ',' + 'טמפרטורה' + ',' + 'לחות - אויר' + ',' + 'אור' + ',' + 'לחות - אדמה' + ',' + 'ph' + '\n')
+        window['-RECORD-'].update(image_filename='cancel.png')
+    except:
+        S_gui.popup_error(title='Recording rate not set', keep_on_top=True)
 
 
 def stop_recording_file():
     global writing_entries, recording_file
     writing_entries = False
     recording_file.close()
+    window['-RECORD-'].update(image_filename='record-image.png', image_subsample=3)
 
 
 def faucet1_set_cond(parameter, mode, value):
@@ -407,53 +444,59 @@ while True:
     elif event == '-RECORD-':
         if writing_entries:
             stop_recording_file()
-            window['-RECORD-'].update(image_filename='record-image.png', image_subsample=3)
         else:
-            window['-RECORD-'].update(image_filename='cancel.png')
             start_recording_file(values)
     elif event == '-UPLOAD-':
         if not cancel_scenario:
             scenario_file_name = S_gui.popup_get_file(message='בחר תרחיש', title='Choose scenario', keep_on_top=True)
             if scenario_file_name is not None:
                 run_through_scenario = True
+                start_recording_file(values)
                 disable_inputs()
                 window['-UPLOAD-'].update(image_filename='cancel.png')
                 cancel_scenario = True
         else:
             cancel_scenario = False
             run_through_scenario = False
+            stop_recording_file()
             first_run = True
             window['-UPLOAD-'].update(image_filename='upload-image.png')
             enable_inputs()
 
     elif event == '-SETTINGS-':
         success = False
+        settings_win = S_gui.Window('הגדרות נוספות', [
+            [S_gui.Input(default_text=flow), S_gui.T(':ספיקה בליטרים לשעה')],
+            [S_gui.Checkbox('הגדר כערכת נושא ברירת מחדל', default=True if theme is default_theme else False)],
+            [S_gui.Checkbox('הצג בחירת ערכת  נושא', default=showThemeSelect)],
+            [S_gui.Checkbox('כתוב לקובץ קיים', default=showThemeSelect)],
+            [S_gui.T(text=existing_file_path, k='-FILE_PATH-'), S_gui.Button(button_text='בחר', k='-FILE_SELECT-')],
+            [S_gui.Button('החל', s=10, k='-APPLY-'), S_gui.Button('בטל', s=10, k='-CANCEL-')],
+            [S_gui.Button('אפס הגדרות', k='-RESET_SETTINGS-')]],
+                                    disable_close=True, element_justification='Right', keep_on_top=True)
         while not success:
-            status, pop_values = S_gui.Window('הגדרות נוספות', [
-                [S_gui.Input(default_text=flow), S_gui.T(':ספיקה בליטרים לשעה')],
-                [S_gui.Checkbox('הגדר כערכת נושא ברירת מחדל', default=True if theme is default_theme else False)],
-                [S_gui.Checkbox('הצג בחירת ערכת  נושא', default=showThemeSelect)],
-                [S_gui.Button('החל', s=10), S_gui.Button('בטל', s=10)]],
-                                              disable_close=True, element_justification='Right', keep_on_top=True).read(
-                close=True)
-            if status != 'בטל':
+            status, pop_values = settings_win.read()
+            if status == '-APPLY-':
                 try:
                     flow = float(pop_values[0])
-                    with open('settings.json', 'r') as read_file:
-                        data = json.load(read_file)
-                    data['flow'] = flow
-                    if pop_values[1]:
-                        data['defaultTheme'] = theme
-                        default_theme = theme
-                    showThemeSelect = pop_values[2]
-                    data['showThemeSelect'] = showThemeSelect
-                    with open('settings.json', 'w') as write_settings_file:
-                        json.dump(data, write_settings_file)
+                    update_settings(flow, pop_values)
                     success = True
                 except:
                     S_gui.popup_error('קלא לא תקין!')
+            elif status == '-FILE_SELECT-':
+                existing_file_path = S_gui.popup_get_file(message='בחר קובץ', title='Choose file',
+                                                          keep_on_top=True)
+                settings_win['-FILE_PATH-'].update(existing_file_path)
+            elif status == '-RESET_SETTINGS-':
+                with open('default_settings.json', 'r') as read_file:
+                    tempData = json.load(read_file)
+                with open('settings.json', 'w') as write_settings_file:
+                    json.dump(tempData, write_settings_file, indent=4)
+                readSettings()
+                success = True
             else:
                 success = True
+        settings_win.close()
 
     elif event == '-UPDATE-':
         if prev_value != values['-C-']:
