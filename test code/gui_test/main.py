@@ -5,7 +5,7 @@ import serial.tools.list_ports
 from datetime import datetime
 import time
 import json
-
+import xlsxwriter
 
 # Great site: https://pysimplegui.readthedocs.io/en/latest/call%20reference/#button-element
 
@@ -96,6 +96,7 @@ start = 0
 end_time = 0
 recording_timer = 0
 csv_file_name = "TempName.csv"
+excel_file_name = "TempName.xlsx"
 
 # More variables
 delay_timer = faucet1_timer = faucet2_timer = 0
@@ -317,20 +318,18 @@ arduino_ports = [
     for p in serial.tools.list_ports.comports()
     if 'Arduino' in p.description  # may need tweaking to match new arduinos
 ]
-if not arduino_ports:
-    while not arduino_ports:
-        e, v = S_gui.Window('שגיאה! לא נמצא ארדואינו מחובר', [[S_gui.T('ארדואינו לא מחובר או לא נמצא! נא לבדוק חיבור')],
-                                                              [S_gui.Button('בדוק שוב'),
-                                                               S_gui.Button('צא', k='--exit--')]],
-                            disable_close=True).read(close=True)
-        if e == '--exit--':
-            exit()
-        arduino_ports = [
-            p.device
-            for p in serial.tools.list_ports.comports()
-            if 'Arduino' in p.description  # may need tweaking to match new arduinos
-        ]
-    raise IOError("No Arduino found")
+while not arduino_ports:
+    e, v = S_gui.Window('שגיאה! לא נמצא ארדואינו מחובר', [[S_gui.T('ארדואינו לא מחובר או לא נמצא! נא לבדוק חיבור')],
+                                                          [S_gui.Button('בדוק שוב'),
+                                                           S_gui.Button('צא', k='--exit--')]],
+                        disable_close=True).read(close=True)
+    if e == '--exit--':
+        exit()
+    arduino_ports = [
+        p.device
+        for p in serial.tools.list_ports.comports()
+        if 'Arduino' in p.description  # may need tweaking to match new arduinos
+    ]
 if len(arduino_ports) > 1:
     warnings.warn('Multiple Arduinos found - using the first')
 
@@ -378,9 +377,9 @@ column_light = [[S_gui.Button(button_text='החל', font='david 30 normal', k='-
 
 column_btnControls = [
     [S_gui.Button(k='-WATER-', image_filename='faucet-image-off.png', image_size=(150, 150),
-                  tooltip='לחצו כאן כדי לפתוח או לסגור את ברז המים', image_subsample=3),
+                  tooltip='לחצו כאן כדי לפתוח או לסגור את ברז 1', image_subsample=3),
      S_gui.Button(k='-FERTILIZER-', image_filename='fertilizer-png-off.png', image_size=(150, 150),
-                  tooltip='לחצו כאן כדי לפתוח או לסגור את ברז הדשן', image_subsample=3)]]
+                  tooltip='לחצו כאן כדי לפתוח או לסגור את ברז 2', image_subsample=3)]]
 
 column_exit = [[S_gui.Button(button_text='יציאה', font='david 30 normal', k='Quit')]]
 
@@ -470,13 +469,13 @@ while True:
         success = False
         settings_win = S_gui.Window('הגדרות נוספות', [
             [S_gui.Input(default_text=flow), S_gui.T(':ספיקה בליטרים לשעה')],
-            [S_gui.Checkbox('הגדר כערכת נושא ברירת מחדל', default=True if theme is default_theme else False)],
-            [S_gui.Checkbox('הצג בחירת ערכת  נושא', default=showThemeSelect)],
+            [S_gui.Checkbox('הגדר ערכת נושא כברירת מחדל', default=True if theme is default_theme else False)],
+            [S_gui.Checkbox('הצג בחירת ערכת נושא', default=showThemeSelect)],
             [S_gui.Checkbox('כתוב לקובץ קיים', default=showThemeSelect)],
-            [S_gui.T(text=existing_file_path, k='-FILE_PATH-'), S_gui.Button(button_text='בחר', k='-FILE_SELECT-')],
+            [S_gui.T(text=existing_file_path, k='-FILE_PATH-'),
+             S_gui.Button(button_text='בחר קובץ קיים לכתוב אליו', k='-FILE_SELECT-')],
             [S_gui.Button('החל', s=10, k='-APPLY-'), S_gui.Button('בטל', s=10, k='-CANCEL-')],
-            [S_gui.Button('אפס הגדרות', k='-RESET_SETTINGS-')]],
-                                    disable_close=True, element_justification='Right', keep_on_top=True)
+            [S_gui.Button('אפס הגדרות', k='-RESET_SETTINGS-')]], element_justification='Right', keep_on_top=True)
         while not success:
             status, pop_values = settings_win.read()
             if status == '-APPLY-':
