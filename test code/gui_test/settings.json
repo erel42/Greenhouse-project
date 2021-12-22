@@ -3,5 +3,6 @@
     "defaultTheme": "DarkAmber",
     "flow": 1.0,
     "WriteToAnExistingFile": false,
-    "WriteToAnExistingFilePath": "Not yet set..."
+    "WriteToAnExistingFilePath": "Not yet set...",
+    "ConvertToExcel": false
 }

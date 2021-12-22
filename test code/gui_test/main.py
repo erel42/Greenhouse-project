@@ -8,13 +8,25 @@ import json
 
 # Great site: https://pysimplegui.readthedocs.io/en/latest/call%20reference/#button-element
 
+from openpyxl import Workbook
+import csv
+
 showThemeSelect = False
-theme = default_theme = flow = existing_file_path = existing_file = None
+theme = default_theme = flow = existing_file_path = existing_file = convert_to_excel = None
+
+
+def convert_csv_to_excel(csv_path):
+    wb = Workbook()
+    ws = wb.active
+    with open(csv_path, 'r') as f:
+        for _row in csv.reader(f):
+            ws.append(_row)
+    wb.save(csv_path[:-4] + '.xlsx')
 
 
 # Reading settings
 def read_settings():
-    global showThemeSelect, theme, default_theme, flow, existing_file_path, existing_file
+    global showThemeSelect, theme, default_theme, flow, existing_file_path, existing_file, convert_to_excel
     with open('settings.json', 'r') as read_settings_file:
         settings_data = json.load(read_settings_file)
 
@@ -24,13 +36,14 @@ def read_settings():
     flow = settings_data['flow']
     existing_file = settings_data['WriteToAnExistingFile']
     existing_file_path = settings_data['WriteToAnExistingFilePath']
+    convert_to_excel = settings_data['ConvertToExcel']
 
 
 read_settings()
 
 
 def update_settings(_flow, _pop_values):
-    global success, showThemeSelect, default_theme, flow, existing_file
+    global success, showThemeSelect, default_theme, flow, existing_file, convert_to_excel
     with open('settings.json', 'r') as read_file:
         data = json.load(read_file)
     data['flow'] = _flow
@@ -43,6 +56,8 @@ def update_settings(_flow, _pop_values):
     data['WriteToAnExistingFile'] = existing_file
     if _pop_values[3]:
         data['WriteToAnExistingFilePath'] = existing_file_path
+    convert_to_excel = _pop_values[4]
+    data['ConvertToExcel'] = convert_to_excel
     with open('settings.json', 'w') as _write_settings_file:
         json.dump(data, _write_settings_file, indent=4)
     success = True
@@ -440,6 +455,8 @@ while True:
     elif event == '-RECORD-':
         if writing_entries:
             stop_recording_file()
+            if convert_to_excel:
+                convert_csv_to_excel(csv_file_name)
         else:
             try:
                 recording_rate = options_dic[values['-OPTIONS_REC-']]
@@ -472,6 +489,7 @@ while True:
             [S_gui.Checkbox('כתוב לקובץ קיים', default=showThemeSelect)],
             [S_gui.T(text=existing_file_path, k='-FILE_PATH-'),
              S_gui.Button(button_text='בחר קובץ קיים לכתוב אליו', k='-FILE_SELECT-')],
+            [S_gui.Checkbox('המר קובץ לאקסל, אזהרה: אפשרות זו עלולה לגרום לבעיות', default=convert_to_excel)],
             [S_gui.Button('החל', s=10, k='-APPLY-'), S_gui.Button('בטל', s=10, k='-CANCEL-')],
             [S_gui.Button('אפס הגדרות', k='-RESET_SETTINGS-')]], element_justification='Right', keep_on_top=True)
         while not success:
