@@ -5,7 +5,6 @@ import serial.tools.list_ports
 from datetime import datetime
 import time
 import json
-import xlsxwriter
 
 # Great site: https://pysimplegui.readthedocs.io/en/latest/call%20reference/#button-element
 
@@ -96,7 +95,6 @@ start = 0
 end_time = 0
 recording_timer = 0
 csv_file_name = "TempName.csv"
-excel_file_name = "TempName.xlsx"
 
 # More variables
 delay_timer = faucet1_timer = faucet2_timer = 0
