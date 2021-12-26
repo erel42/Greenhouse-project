@@ -5,28 +5,69 @@ import serial.tools.list_ports
 from datetime import datetime
 import time
 import json
+import os
 
 # Great site: https://pysimplegui.readthedocs.io/en/latest/call%20reference/#button-element
 
 from openpyxl import Workbook
+from openpyxl import load_workbook
+from openpyxl.styles import Font, Alignment
+from openpyxl.utils.cell import get_column_letter
 import csv
 
 showThemeSelect = False
-theme = default_theme = flow = existing_file_path = existing_file = convert_to_excel = None
+theme = default_theme = flow = existing_file_path = existing_file = convert_to_excel = root_folder = None
+
+
+def estimate_width(value):
+    _value = str(value)
+    return len(_value)
 
 
 def convert_csv_to_excel(csv_path):
-    wb = Workbook()
+    skip = 0
+    excel_name = csv_path[:-4] + '.xlsx'
+    if os.path.isfile(excel_name):
+        wb = load_workbook(excel_name)
+        skip = wb.active.max_row
+    else:
+        wb = Workbook()
     ws = wb.active
+    counter = 0
+
     with open(csv_path, 'r') as f:
         for _row in csv.reader(f):
-            ws.append(_row)
-    wb.save(csv_path[:-4] + '.xlsx')
+            if counter == skip:
+                _list = []
+                for item in _row:
+                    try:
+                        _list.append(int(item))
+                    except:
+                        try:
+                            _list.append(float(item))
+                        except:
+                            _list.append(str(item))
+                ws.append(_list)
+            else:
+                counter = counter + 1
+    for _row in range(skip + 1, ws.max_row + 1):
+        for _col in range(1, ws.max_column + 1):
+            active_cell = ws.cell(_row, _col)
+            active_cell.alignment = Alignment(horizontal='right')
+    if skip == 0:
+        col = 1
+        for _cell in ws["1:1"]:
+            _cell.font = Font(bold=True)
+            column_size = max(estimate_width(ws.cell(row=1, column=col).value),
+                              estimate_width(ws.cell(row=2, column=col).value)) + 3
+            ws.column_dimensions[get_column_letter(col)].width = column_size
+            col = col + 1
+    wb.save(excel_name)
 
 
 # Reading settings
 def read_settings():
-    global showThemeSelect, theme, default_theme, flow, existing_file_path, existing_file, convert_to_excel
+    global showThemeSelect, theme, default_theme, flow, existing_file_path, existing_file, convert_to_excel, root_folder
     with open('settings.json', 'r') as read_settings_file:
         settings_data = json.load(read_settings_file)
 
@@ -37,13 +78,14 @@ def read_settings():
     existing_file = settings_data['WriteToAnExistingFile']
     existing_file_path = settings_data['WriteToAnExistingFilePath']
     convert_to_excel = settings_data['ConvertToExcel']
+    root_folder = settings_data['RootFolder']
 
 
 read_settings()
 
 
 def update_settings(_flow, _pop_values):
-    global success, showThemeSelect, default_theme, flow, existing_file, convert_to_excel
+    global success, showThemeSelect, default_theme, flow, existing_file, convert_to_excel, root_folder
     with open('settings.json', 'r') as read_file:
         data = json.load(read_file)
     data['flow'] = _flow
@@ -56,6 +98,7 @@ def update_settings(_flow, _pop_values):
     data['WriteToAnExistingFile'] = existing_file
     if _pop_values[3]:
         data['WriteToAnExistingFilePath'] = existing_file_path
+    data['RootFolder'] = root_folder
     convert_to_excel = _pop_values[4]
     data['ConvertToExcel'] = convert_to_excel
     with open('settings.json', 'w') as _write_settings_file:
@@ -147,9 +190,10 @@ options_dic = {
 def start_recording_file():
     global writing_entries, csv_file_name, recording_file
     writing_entries = True
-    csv_file_name = "Recording_file_" + str(int(time.time())) + ".csv"
+    csv_file_name = root_folder + "\\Recording_file_" + str(int(time.time())) + ".csv"
     if existing_file:
         recording_file = open(existing_file_path, "a")
+        csv_file_name = existing_file_path
     else:
         recording_file = open(csv_file_name, "w")
         recording_file.write(
@@ -486,10 +530,12 @@ while True:
             [S_gui.Input(default_text=flow), S_gui.T(':ספיקה בליטרים לשעה')],
             [S_gui.Checkbox('הגדר ערכת נושא כברירת מחדל', default=True if theme is default_theme else False)],
             [S_gui.Checkbox('הצג בחירת ערכת נושא', default=showThemeSelect)],
-            [S_gui.Checkbox('כתוב לקובץ קיים', default=showThemeSelect)],
+            [S_gui.Checkbox('כתוב לקובץ קיים', default=existing_file)],
             [S_gui.T(text=existing_file_path, k='-FILE_PATH-'),
              S_gui.Button(button_text='בחר קובץ קיים לכתוב אליו', k='-FILE_SELECT-')],
-            [S_gui.Checkbox('המר קובץ לאקסל, אזהרה: אפשרות זו עלולה לגרום לבעיות', default=convert_to_excel)],
+            [S_gui.T(text=root_folder, k='-FOLDER_PATH-'),
+             S_gui.Button(button_text='בחר תיקייה אליה ישמרו קבצי האקסל', k='-FOLDER_SELECT-')],
+            [S_gui.Checkbox('המר קובץ לאקסל', default=convert_to_excel)],
             [S_gui.Button('החל', s=10, k='-APPLY-'), S_gui.Button('בטל', s=10, k='-CANCEL-')],
             [S_gui.Button('אפס הגדרות', k='-RESET_SETTINGS-')]], element_justification='Right', keep_on_top=True)
         while not success:
@@ -502,9 +548,23 @@ while True:
                 except:
                     S_gui.popup_error('קלא לא תקין!')
             elif status == '-FILE_SELECT-':
-                existing_file_path = S_gui.popup_get_file(message='בחר קובץ', title='Choose file',
-                                                          keep_on_top=True)
+                _existing_file_path = S_gui.popup_get_file(message='בחר קובץ', title='Choose file', keep_on_top=True)
+                while _existing_file_path is not None and _existing_file_path[-4:] != '.csv':
+                    S_gui.popup_error('בלבד' + ' csv ' + 'נבחר קובץ לא מתאים! יש לבחור קבצי', keep_on_top=True)
+                    _existing_file_path = S_gui.popup_get_file(message='בחר קובץ', title='Choose file',
+                                                               keep_on_top=True)
+                if _existing_file_path is not None:
+                    existing_file_path = _existing_file_path
                 settings_win['-FILE_PATH-'].update(existing_file_path)
+            elif status == '-FOLDER_SELECT-':
+                _folder_path = S_gui.popup_get_folder(message='בחר תיקייה', title='Choose folder', keep_on_top=True)
+                while _folder_path == "":
+                    S_gui.popup_error('נא לבחור תיקייה', keep_on_top=True)
+                    _folder_path = S_gui.popup_get_folder(message='בחר תיקייה', title='Choose folder', keep_on_top=True)
+                if _folder_path is not None:
+                    root_folder = _folder_path
+                settings_win['-FOLDER_PATH-'].update(root_folder)
+
             elif status == '-RESET_SETTINGS-':
                 with open('default_settings.json', 'r') as read_file:
                     tempData = json.load(read_file)
