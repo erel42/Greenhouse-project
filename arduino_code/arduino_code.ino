@@ -16,7 +16,7 @@
 #define PH_SENSOR_PIN A0
 
 //Constents define
-#define NUM_OF_VALUES 3 //How many values in each CSV row
+#define NUM_OF_VALUES 5 //How many values in each CSV row
 #define LCD_pages 2
 #define LCD_ROUNDS 6
 
@@ -106,7 +106,9 @@ void updateValues()
   dhtUpdate();
   ldrUpdate();
   moist = analogRead(MOIST_SENSOR_PIN); 
+  valueArr[3] = moist;
   pH_Value = analogRead(PH_SENSOR_PIN);
+  valueArr[4] = pH_Value;
 
 }
 

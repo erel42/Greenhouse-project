@@ -17,6 +17,8 @@ import csv
 
 version = '1.0.0'
 
+os.chdir(os.getcwd() + "//Assets")
+
 showThemeSelect = False
 theme = default_theme = flow = existing_file_path = existing_file = convert_to_excel = root_folder = None
 
@@ -191,7 +193,7 @@ options_dic = {
 def start_recording_file():
     global writing_entries, csv_file_name, recording_file
     writing_entries = True
-    csv_file_name = root_folder + "\\Recording_file_" + str(int(time.time())) + ".csv"
+    csv_file_name = root_folder + "\\.." + "\\Recording_file_" + str(int(time.time())) + ".csv"
     if existing_file:
         recording_file = open(existing_file_path, "a")
         csv_file_name = existing_file_path
