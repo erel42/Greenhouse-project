@@ -1,3 +1,5 @@
+#define VERSION "V 1.0.0"
+
 //Includes
 #include <DHT.h>
 #include <Wire.h> 
@@ -10,6 +12,8 @@
 #define LDR_PIN A3
 #define RELAY_1_PIN 4
 #define RELAY_2_PIN 8
+#define MOIST_SENSOR_PIN A1
+#define PH_SENSOR_PIN A0
 
 //Constents define
 #define NUM_OF_VALUES 3 //How many values in each CSV row
@@ -57,7 +61,7 @@ int RGB[3] = {0,0,0};
 bool leave = false;
 
 //Sensor variables
-float temp = -1, humidty = -1, moist = -1, light = -1, RLDR = 0, Vout = 0;
+float temp = -1, humidty = -1, moist = -1, light = -1, pH_Value = -1, RLDR = 0, Vout = 0;
 int lightLevel = -1;
 int red = 0, green = 0, blue = 0; //RGB values
 
@@ -72,9 +76,14 @@ void setup()
   // Print a message to the LCD.
   lcd.backlight();
   
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.write(VERSION);
+  
   pinMode(13, OUTPUT); //LED pin, can be removed
   
   //Relay pins
+  pinMode(PH_SENSOR_PIN, INPUT); 
   pinMode(RELAY_1_PIN, OUTPUT);
   pinMode(RELAY_2_PIN, OUTPUT);
   digitalWrite(RELAY_1_PIN, HIGH);
@@ -96,6 +105,9 @@ void updateValues()
 {
   dhtUpdate();
   ldrUpdate();
+  moist = analogRead(MOIST_SENSOR_PIN); 
+  pH_Value = analogRead(PH_SENSOR_PIN);
+
 }
 
 void lcdCycle()
@@ -208,6 +220,10 @@ void lcdCycle()
       lcd.setCursor(10,i);
       lcd.print("       ");
     }
+
+	//pH
+	lcd.setCursor(14,1);
+    lcd.print(pH_Value);
 
     //Faucet 1
     lcd.setCursor(12,1);
