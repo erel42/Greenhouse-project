@@ -6,6 +6,7 @@ from datetime import datetime
 import time
 import json
 import os
+import ctypes
 
 # Great site: https://pysimplegui.readthedocs.io/en/latest/call%20reference/#button-element
 # Using PyInstaller: https://pyinstaller.readthedocs.io/en/stable/usage.html#using-pyinstaller
@@ -15,6 +16,8 @@ from openpyxl import load_workbook
 from openpyxl.styles import Font, Alignment
 from openpyxl.utils.cell import get_column_letter
 import csv
+
+ctypes.windll.user32.ShowWindow( ctypes.windll.kernel32.GetConsoleWindow(), 0)
 
 version = '1.0.0'
 

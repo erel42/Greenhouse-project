@@ -1,9 +1,8 @@
 import PySimpleGUI as sg
 import time
+import ctypes
+ctypes.windll.user32.ShowWindow( ctypes.windll.kernel32.GetConsoleWindow(), 0 )
 
-file1 = open('test.txt', 'r')
-
-Lines = file1.readlines()
 count = 0
 lCount = 0
 pause = 0
@@ -290,7 +289,7 @@ while True:  # The Event Loop
                                        disable_close=True).read(close=True)
         if status == 'בטל':
             continue
-        file_write = open(pop_values['-NAME-'] + '.txt', 'w')
+        file_write = open("scenarios\\" + pop_values['-NAME-'] + '.txt', 'w')
         file_write.write('{\n')
         for i in range(0, len(pre)):
             file_write.write(pre[i])
