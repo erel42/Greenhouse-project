@@ -59,6 +59,7 @@ int i, cycle = 0, rounds = 0;
 String input, data, tmp;
 int RGB[3] = {0,0,0};
 bool leave = false;
+int moisture_timer = 50;
 
 //Sensor variables
 float temp = -1, humidty = -1, moist = -1, light = -1, pH_Value = -1, RLDR = 0, Vout = 0;
@@ -105,7 +106,12 @@ void updateValues()
 {
   dhtUpdate();
   ldrUpdate();
-  moist = analogRead(MOIST_SENSOR_PIN); 
+  moisture_timer -= 1;
+  if (moisture_timer == 0)
+  {
+    moist = analogRead(MOIST_SENSOR_PIN); 
+    moisture_timer = 50;
+  }
   valueArr[3] = moist;
   pH_Value = analogRead(PH_SENSOR_PIN);
   valueArr[4] = pH_Value;
